@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Söz Tapmaca — Adam Asma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12161d;
+    --panel: #1b2129;
+    --panel-2: #222a34;
+    --line: #33404f;
+    --gold: #c99a4a;
+    --gold-dim: #8a6f3d;
+    --green: #4f9d72;
+    --red: #b6495c;
+    --ink: #ece4d3;
+    --ink-dim: #a7a196;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #1a2230 0%, transparent 60%),
+      radial-gradient(1000px 700px at 110% 10%, #1c1620 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Manrope', sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px 14px;
+  }
+
+  .buta-strip{
+    height:10px;
+    width:100%;
+    background-image: repeating-linear-gradient(135deg, var(--gold) 0 3px, transparent 3px 14px);
+    opacity:.55;
+  }
+  .buta-strip.bottom{opacity:.3;}
+
+  .card{
+    width:100%;
+    max-width:560px;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border:1px solid var(--line);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,.6);
+  }
+
+  .card-body{
+    padding: 26px 26px 30px;
+  }
+
+  h1{
+    font-family:'Zilla Slab', serif;
+    font-weight:700;
+    font-size: 1.7rem;
+    letter-spacing:.2px;
+    margin: 2px 0 4px;
+    color: var(--ink);
+  }
+  .tagline{
+    color:var(--ink-dim);
+    font-size:.92rem;
+    margin:0 0 20px;
+  }
+
+  .hangman-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 18px;
+    margin-bottom: 16px;
+    flex-wrap:wrap;
+  }
+
+  .hangman-box{
+    background: rgba(0,0,0,.18);
+    border:1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 10px 2px;
+  }
+  .hangman-box svg{
+    display:block;
+    width: 150px;
+    height: 165px;
+  }
+
+  .status-col{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+  }
+  .wrong-count{
+    font-family:'Zilla Slab', serif;
+    font-size:1.05rem;
+    color: var(--ink);
+  }
+  .wrong-count b{
+    color: var(--red);
+    font-size:1.3rem;
+  }
+  .wrong-count .of{
+    color: var(--ink-dim);
+    font-size:.95rem;
+  }
+
+  .word-display{
+    font-family:'Zilla Slab', serif;
+    font-size: clamp(1.7rem, 6vw, 2.5rem);
+    letter-spacing: 10px;
+    text-align:center;
+    padding: 26px 10px;
+    margin: 4px 0 6px;
+    background: rgba(0,0,0,.18);
+    border:1px solid var(--line);
+    border-radius: 12px;
+    word-break: break-all;
+    min-height: 1.6em;
+  }
+
+  .wrong-letters{
+    text-align:center;
+    color: var(--red);
+    min-height: 1.3em;
+    font-size:.9rem;
+    letter-spacing:1px;
+    margin-bottom: 6px;
+  }
+
+  .message{
+    text-align:center;
+    min-height: 1.4em;
+    font-size: .98rem;
+    margin: 6px 0 14px;
+    line-height:1.5;
+  }
+  .message.win{ color: var(--green); font-weight:700; font-size:1.1rem; }
+  .message.lose{ color: var(--red); font-weight:700; font-size:1.1rem; }
+
+  .toast{
+    text-align:center;
+    color: var(--ink-dim);
+    font-size:.85rem;
+    min-height: 1.2em;
+    margin-bottom: 10px;
+  }
+
+  .keyboard{
+    display:grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+  @media (max-width:420px){
+    .keyboard{ grid-template-columns: repeat(6, 1fr); }
+  }
+
+  .key{
+    padding: 10px 0;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink);
+    font-family:'Manrope', sans-serif;
+    font-weight:700;
+    font-size: .95rem;
+    cursor:pointer;
+    transition: background .12s ease, transform .06s ease, border-color .12s ease;
+  }
+  .key:hover:not(:disabled){ border-color: var(--gold-dim); }
+  .key:active:not(:disabled){ transform: scale(.94); }
+  .key:disabled{ cursor:default; }
+  .key.correct{ background: rgba(79,157,114,.25); border-color: var(--green); color:#cdeedd; }
+  .key.wrong{ background: rgba(182,73,92,.2); border-color: var(--red); color:#f0c3cb; opacity:.75; }
+
+  .footer-actions{
+    display:flex;
+    justify-content:center;
+    margin-top: 16px;
+  }
+  #newWordBtn{
+    display:none;
+    background: var(--gold);
+    color: #21170a;
+    border:none;
+    padding: 12px 26px;
+    border-radius: 10px;
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:.98rem;
+    cursor:pointer;
+    transition: transform .1s ease, filter .12s ease;
+  }
+  #newWordBtn:hover{ filter:brightness(1.08); }
+  #newWordBtn:active{ transform: scale(.97); }
+
+  .meta{
+    text-align:center;
+    color: var(--ink-dim);
+    font-size:.78rem;
+    margin-top: 18px;
+  }
+
+  .credit{
+    text-align:center;
+    color: var(--ink-dim);
+    font-size:.76rem;
+    line-height:1.6;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .credit-handle{
+    color: var(--gold);
+    font-weight:600;
+  }
+
+  .hg-line, .hg-rope{ stroke: var(--ink-dim); stroke-width:4; stroke-linecap:round; fill:none; }
+  .hg-figure{ stroke: var(--gold); stroke-width:4; stroke-linecap:round; fill:none; }
+  .hg-head{ stroke: var(--gold); stroke-width:4; fill:none; }
+  .hg-part{ opacity:0; transition: opacity .25s ease; }
+  .hg-part.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="buta-strip"></div>
+  <div class="card-body">
+    <h1>Söz Tapmaca</h1>
+    <p class="tagline">Gizli sözü hərf-hərf tapmağa çalış.</p>
+
+    <div class="hangman-wrap">
+      <div class="hangman-box">
+        <svg viewBox="0 0 150 165" xmlns="http://www.w3.org/2000/svg">
+          <!-- base -->
+          <line id="hg-1" class="hg-line hg-part" x1="10" y1="155" x2="90" y2="155"/>
+          <!-- pole -->
+          <line id="hg-2" class="hg-line hg-part" x1="30" y1="155" x2="30" y2="15"/>
+          <!-- beam -->
+          <line id="hg-3" class="hg-line hg-part" x1="30" y1="15" x2="100" y2="15"/>
+          <!-- rope -->
+          <line id="hg-4" class="hg-rope hg-part" x1="100" y1="15" x2="100" y2="35"/>
+          <!-- head -->
+          <circle id="hg-5" class="hg-head hg-part" cx="100" cy="48" r="13"/>
+          <!-- body -->
+          <line id="hg-6" class="hg-figure hg-part" x1="100" y1="61" x2="100" y2="100"/>
+          <!-- arms -->
+          <g id="hg-7" class="hg-part">
+            <line class="hg-figure" x1="100" y1="72" x2="82" y2="90"/>
+            <line class="hg-figure" x1="100" y1="72" x2="118" y2="90"/>
+          </g>
+          <!-- legs -->
+          <g id="hg-8" class="hg-part">
+            <line class="hg-figure" x1="100" y1="100" x2="84" y2="130"/>
+            <line class="hg-figure" x1="100" y1="100" x2="116" y2="130"/>
+          </g>
+        </svg>
+      </div>
+      <div class="status-col">
+        <div class="wrong-count">Səhv: <b id="wrongCount">0</b><span class="of"> / 8</span></div>
+      </div>
+    </div>
+
+    <div class="word-display" id="wordDisplay"></div>
+    <div class="wrong-letters" id="wrongLetters"></div>
+    <div class="message" id="message"></div>
+    <div class="toast" id="toast"></div>
+
+    <div class="keyboard" id="keyboard"></div>
+
+    <div class="footer-actions">
+      <button id="newWordBtn">Yeni söz →</button>
+    </div>
+
+    <div class="meta" id="wordCountMeta"></div>
+    <div class="credit">
+      Created by Raul Mammadzada<br>
+      Contact: <span class="credit-handle">@raulmmzd</span> — TikTok · Instagram · WhatsApp
+    </div>
+  </div>
+  <div class="buta-strip bottom"></div>
+</div>
+
+<script>
+/* ================== SÖZ BAZASI ================== */
+const WORDS = [
+// Heyvanlar
+{w:"PİŞİK",c:"Heyvanlar"},
+{w:"İT",c:"Heyvanlar"},
+{w:"AT",c:"Heyvanlar"},
+{w:"İNƏK",c:"Heyvanlar"},
+{w:"QOYUN",c:"Heyvanlar"},
+{w:"KEÇİ",c:"Heyvanlar"},
+{w:"DƏVƏ",c:"Heyvanlar"},
+{w:"ASLAN",c:"Heyvanlar"},
+{w:"PƏLƏNG",c:"Heyvanlar"},
+{w:"AYI",c:"Heyvanlar"},
+{w:"CANAVAR",c:"Heyvanlar"},
+{w:"TÜLKÜ",c:"Heyvanlar"},
+{w:"DOVŞAN",c:"Heyvanlar"},
+{w:"SIÇAN",c:"Heyvanlar"},
+{w:"MEYMUN",c:"Heyvanlar"},
+{w:"FİL",c:"Heyvanlar"},
+{w:"ZÜRAFƏ",c:"Heyvanlar"},
+{w:"CEYRAN",c:"Heyvanlar"},
+{w:"MARAL",c:"Heyvanlar"},
+{w:"PORSUQ",c:"Heyvanlar"},
+{w:"KİRPİ",c:"Heyvanlar"},
+{w:"DƏLƏ",c:"Heyvanlar"},
+{w:"KÖSTƏBƏK",c:"Heyvanlar"},
+{w:"DELFİN",c:"Heyvanlar"},
+{w:"BALİNA",c:"Heyvanlar"},
+{w:"FOK",c:"Heyvanlar"},
+{w:"QURBAĞA",c:"Heyvanlar"},
+{w:"TISBAĞA",c:"Heyvanlar"},
+{w:"KƏRTƏNKƏLƏ",c:"Heyvanlar"},
+{w:"ÇAQQAL",c:"Heyvanlar"},
+{w:"VAŞAQ",c:"Heyvanlar"},
+{w:"SAMUR",c:"Heyvanlar"},
+{w:"ZEBRA",c:"Heyvanlar"},
+{w:"QORİLLA",c:"Heyvanlar"},
+{w:"ŞİMPANZE",c:"Heyvanlar"},
+{w:"PANDA",c:"Heyvanlar"},
+{w:"KOALA",c:"Heyvanlar"},
+{w:"YARASA",c:"Heyvanlar"},
+{w:"QUNDUZ",c:"Heyvanlar"},
+{w:"KƏRGƏDAN",c:"Heyvanlar"},
+{w:"SIÇOVUL",c:"Heyvanlar"},
+{w:"ULAQ",c:"Heyvanlar"},
+{w:"QATIR",c:"Heyvanlar"},
+{w:"EŞŞƏK",c:"Heyvanlar"},
+{w:"MANDA",c:"Heyvanlar"},
+{w:"BÖRÜ",c:"Heyvanlar"},
+{w:"TOĞLU",c:"Heyvanlar"},
+{w:"QUZU",c:"Heyvanlar"},
+{w:"BUZOV",c:"Heyvanlar"},
+{w:"DANA",c:"Heyvanlar"},
+// Quşlar
+{w:"SƏRÇƏ",c:"Quşlar"},
+{w:"TOYUQ",c:"Quşlar"},
+{w:"XORUZ",c:"Quşlar"},
+{w:"ÖRDƏK",c:"Quşlar"},
+{w:"QAZ",c:"Quşlar"},
+{w:"BAYQUŞ",c:"Quşlar"},
+{w:"QARTAL",c:"Quşlar"},
+{w:"ŞAHİN",c:"Quşlar"},
+{w:"QARĞA",c:"Quşlar"},
+{w:"GÖYƏRÇİN",c:"Quşlar"},
+{w:"BÜLBÜL",c:"Quşlar"},
+{w:"TUTUQUŞU",c:"Quşlar"},
+{w:"PİNQVİN",c:"Quşlar"},
+{w:"FLAMİNQO",c:"Quşlar"},
+{w:"LEYLƏK",c:"Quşlar"},
+{w:"TOVUZQUŞU",c:"Quşlar"},
+{w:"DƏVƏQUŞU",c:"Quşlar"},
+{w:"QARANQUŞ",c:"Quşlar"},
+{w:"SAĞSAĞAN",c:"Quşlar"},
+{w:"KƏKLİK",c:"Quşlar"},
+// Su heyvanları
+{w:"BALIQ",c:"Su heyvanları"},
+{w:"XƏRÇƏNG",c:"Su heyvanları"},
+{w:"İSTİRİDYƏ",c:"Su heyvanları"},
+{w:"MİDYƏ",c:"Su heyvanları"},
+{w:"AXTAPOD",c:"Su heyvanları"},
+{w:"KALMAR",c:"Su heyvanları"},
+{w:"SÜNGƏR",c:"Su heyvanları"},
+{w:"MEDUZA",c:"Su heyvanları"},
+{w:"TUNA",c:"Su heyvanları"},
+{w:"SOM",c:"Su heyvanları"},
+{w:"ALABALIQ",c:"Su heyvanları"},
+{w:"NƏRƏ",c:"Su heyvanları"},
+{w:"TİMSAH",c:"Su heyvanları"},
+{w:"KİT",c:"Su heyvanları"},
+// Həşəratlar
+{w:"ARI",c:"Həşəratlar"},
+{w:"KƏPƏNƏK",c:"Həşəratlar"},
+{w:"QARIŞQA",c:"Həşəratlar"},
+{w:"MİLÇƏK",c:"Həşəratlar"},
+{w:"AĞCAQANAD",c:"Həşəratlar"},
+{w:"HÖRÜMÇƏK",c:"Həşəratlar"},
+{w:"BÖCƏK",c:"Həşəratlar"},
+{w:"ÇƏYİRTKƏ",c:"Həşəratlar"},
+{w:"GENƏ",c:"Həşəratlar"},
+{w:"BİT",c:"Həşəratlar"},
+{w:"GÜVƏ",c:"Həşəratlar"},
+{w:"İLBİZ",c:"Həşəratlar"},
+// Təbiət
+{w:"DAĞ",c:"Təbiət"},
+{w:"ÇAY",c:"Təbiət"},
+{w:"DƏNİZ",c:"Təbiət"},
+{w:"GÖL",c:"Təbiət"},
+{w:"MEŞƏ",c:"Təbiət"},
+{w:"SƏHRA",c:"Təbiət"},
+{w:"DAŞ",c:"Təbiət"},
+{w:"TORPAQ",c:"Təbiət"},
+{w:"GÜNƏŞ",c:"Təbiət"},
+{w:"AY",c:"Təbiət"},
+{w:"ULDUZ",c:"Təbiət"},
+{w:"YAĞIŞ",c:"Təbiət"},
+{w:"QAR",c:"Təbiət"},
+{w:"KÜLƏK",c:"Təbiət"},
+{w:"ŞİMŞƏK",c:"Təbiət"},
+{w:"ÇİÇƏK",c:"Təbiət"},
+{w:"AĞAC",c:"Təbiət"},
+{w:"YARPAQ",c:"Təbiət"},
+{w:"BULUD",c:"Təbiət"},
+{w:"DUMAN",c:"Təbiət"},
+{w:"VULKAN",c:"Təbiət"},
+{w:"ADA",c:"Təbiət"},
+{w:"YARIMADA",c:"Təbiət"},
+{w:"SAHİL",c:"Təbiət"},
+{w:"VADİ",c:"Təbiət"},
+{w:"MAĞARA",c:"Təbiət"},
+{w:"ŞƏLALƏ",c:"Təbiət"},
+{w:"QAYA",c:"Təbiət"},
+{w:"BATAQLIQ",c:"Təbiət"},
+{w:"KÖRFƏZ",c:"Təbiət"},
+{w:"YAYLA",c:"Təbiət"},
+{w:"DÜZƏNLİK",c:"Təbiət"},
+{w:"TƏPƏ",c:"Təbiət"},
+{w:"BUZLAQ",c:"Təbiət"},
+{w:"OAZİS",c:"Təbiət"},
+// Hava hadisələri
+{w:"ÇOVĞUN",c:"Hava hadisələri"},
+{w:"DOLU",c:"Hava hadisələri"},
+{w:"SEL",c:"Hava hadisələri"},
+{w:"QASIRĞA",c:"Hava hadisələri"},
+{w:"TUFAN",c:"Hava hadisələri"},
+{w:"İSTİ",c:"Hava hadisələri"},
+{w:"SOYUQ",c:"Hava hadisələri"},
+{w:"NƏMLİK",c:"Hava hadisələri"},
+{w:"QURAQLIQ",c:"Hava hadisələri"},
+{w:"ŞEH",c:"Hava hadisələri"},
+{w:"BUZ",c:"Hava hadisələri"},
+{w:"ŞAXTA",c:"Hava hadisələri"},
+// Kosmos
+{w:"PLANET",c:"Kosmos"},
+{w:"MƏRİX",c:"Kosmos"},
+{w:"YER",c:"Kosmos"},
+{w:"VENERA",c:"Kosmos"},
+{w:"YUPİTER",c:"Kosmos"},
+{w:"SATURN",c:"Kosmos"},
+{w:"NEPTUN",c:"Kosmos"},
+{w:"URAN",c:"Kosmos"},
+{w:"MERKURİ",c:"Kosmos"},
+{w:"KOMET",c:"Kosmos"},
+{w:"METEOR",c:"Kosmos"},
+{w:"QALAKTİKA",c:"Kosmos"},
+{w:"KAİNAT",c:"Kosmos"},
+{w:"ASTRONAVT",c:"Kosmos"},
+{w:"PEYK",c:"Kosmos"},
+// Bitkilər
+{w:"OT",c:"Bitkilər"},
+{w:"KOL",c:"Bitkilər"},
+{w:"QAMIŞ",c:"Bitkilər"},
+{w:"YOSUN",c:"Bitkilər"},
+{w:"GÖBƏLƏK",c:"Bitkilər"},
+{w:"KAKTUS",c:"Bitkilər"},
+{w:"SARMAŞIQ",c:"Bitkilər"},
+{w:"PALMA",c:"Bitkilər"},
+{w:"PAPİRUS",c:"Bitkilər"},
+{w:"BAMBUK",c:"Bitkilər"},
+{w:"LOTUS",c:"Bitkilər"},
+{w:"YONCA",c:"Bitkilər"},
+{w:"REYHAN",c:"Bitkilər"},
+// Ağaclar
+{w:"PALID",c:"Ağaclar"},
+{w:"ŞAM",c:"Ağaclar"},
+{w:"ÇİNAR",c:"Ağaclar"},
+{w:"SÖYÜD",c:"Ağaclar"},
+{w:"QOZ",c:"Ağaclar"},
+{w:"FISTIQ",c:"Ağaclar"},
+{w:"TUT",c:"Ağaclar"},
+{w:"ZEYTUN",c:"Ağaclar"},
+{w:"ARDIC",c:"Ağaclar"},
+{w:"QOVAQ",c:"Ağaclar"},
+{w:"QAYIN",c:"Ağaclar"},
+{w:"SƏRV",c:"Ağaclar"},
+// Çiçəklər
+{w:"QIZILGÜL",c:"Çiçəklər"},
+{w:"BƏNÖVŞƏ",c:"Çiçəklər"},
+{w:"LALƏ",c:"Çiçəklər"},
+{w:"NƏRGİZ",c:"Çiçəklər"},
+{w:"XRİZANTEM",c:"Çiçəklər"},
+{w:"SÜMBÜL",c:"Çiçəklər"},
+{w:"ZƏNBƏQ",c:"Çiçəklər"},
+{w:"GÜNƏBAXAN",c:"Çiçəklər"},
+{w:"MAQNOLİYA",c:"Çiçəklər"},
+{w:"ORXİDEYA",c:"Çiçəklər"},
+{w:"KAMELİYA",c:"Çiçəklər"},
+{w:"YASƏMƏN",c:"Çiçəklər"},
+// Yemək
+{w:"ÇÖRƏK",c:"Yemək"},
+{w:"SÜD",c:"Yemək"},
+{w:"PENDİR",c:"Yemək"},
+{w:"YUMURTA",c:"Yemək"},
+{w:"DÜYÜ",c:"Yemək"},
+{w:"KARTOF",c:"Yemək"},
+{w:"PİYAZ",c:"Yemək"},
+{w:"SARIMSAQ",c:"Yemək"},
+{w:"BAL",c:"Yemək"},
+{w:"ŞƏKƏR",c:"Yemək"},
+{w:"DUZ",c:"Yemək"},
+{w:"PLOV",c:"Yemək"},
+{w:"DOLMA",c:"Yemək"},
+{w:"KABAB",c:"Yemək"},
+{w:"QƏHVƏ",c:"Yemək"},
+{w:"BAKLAVA",c:"Yemək"},
+{w:"QATIQ",c:"Yemək"},
+{w:"BALQABAQ",c:"Yemək"},
+{w:"ŞORBA",c:"Yemək"},
+{w:"SALAT",c:"Yemək"},
+{w:"KOFTƏ",c:"Yemək"},
+{w:"LƏVƏNGİ",c:"Yemək"},
+{w:"SUCUQ",c:"Yemək"},
+{w:"PİROQ",c:"Yemək"},
+{w:"TORT",c:"Yemək"},
+{w:"DONDURMA",c:"Yemək"},
+{w:"ŞOKOLAD",c:"Yemək"},
+{w:"QOVURMA",c:"Yemək"},
+{w:"BOZBAŞ",c:"Yemək"},
+{w:"XƏNGƏL",c:"Yemək"},
+{w:"LƏBLƏBİ",c:"Yemək"},
+{w:"ŞƏKƏRBURA",c:"Yemək"},
+{w:"AŞURA",c:"Yemək"},
+{w:"UN",c:"Yemək"},
+{w:"YAĞ",c:"Yemək"},
+{w:"SİRKƏ",c:"Yemək"},
+{w:"MAYONEZ",c:"Yemək"},
+{w:"ARPA",c:"Yemək"},
+{w:"BUĞDA",c:"Yemək"},
+{w:"MISIR",c:"Yemək"},
+{w:"NOXUD",c:"Yemək"},
+{w:"LOBYA",c:"Yemək"},
+{w:"MƏRCİMƏK",c:"Yemək"},
+{w:"HƏLİM",c:"Yemək"},
+{w:"KÜKÜ",c:"Yemək"},
+{w:"MURABBƏ",c:"Yemək"},
+{w:"TURŞU",c:"Yemək"},
+{w:"AŞ",c:"Yemək"},
+{w:"PAXLA",c:"Yemək"},
+{w:"HƏLVA",c:"Yemək"},
+{w:"QAYMAQ",c:"Yemək"},
+{w:"KƏRƏYAĞI",c:"Yemək"},
+{w:"ŞİRNİYYAT",c:"Yemək"},
+// Meyvə-tərəvəz
+{w:"ŞAFTALI",c:"Meyvə-tərəvəz"},
+{w:"ƏRİK",c:"Meyvə-tərəvəz"},
+{w:"GİLAS",c:"Meyvə-tərəvəz"},
+{w:"NAR",c:"Meyvə-tərəvəz"},
+{w:"BANAN",c:"Meyvə-tərəvəz"},
+{w:"XURMA",c:"Meyvə-tərəvəz"},
+{w:"BADAM",c:"Meyvə-tərəvəz"},
+{w:"FINDIQ",c:"Meyvə-tərəvəz"},
+{w:"KAHI",c:"Meyvə-tərəvəz"},
+{w:"BADIMCAN",c:"Meyvə-tərəvəz"},
+{w:"İSTİOT",c:"Meyvə-tərəvəz"},
+{w:"YERKÖKÜ",c:"Meyvə-tərəvəz"},
+{w:"ALMA",c:"Meyvə-tərəvəz"},
+{w:"ARMUD",c:"Meyvə-tərəvəz"},
+{w:"ÜZÜM",c:"Meyvə-tərəvəz"},
+{w:"QARPIZ",c:"Meyvə-tərəvəz"},
+{w:"PORTAĞAL",c:"Meyvə-tərəvəz"},
+{w:"LİMON",c:"Meyvə-tərəvəz"},
+{w:"POMİDOR",c:"Meyvə-tərəvəz"},
+{w:"XİYAR",c:"Meyvə-tərəvəz"},
+{w:"MANDARİN",c:"Meyvə-tərəvəz"},
+{w:"ƏNCİR",c:"Meyvə-tərəvəz"},
+{w:"HEYVA",c:"Meyvə-tərəvəz"},
+{w:"ZOĞAL",c:"Meyvə-tərəvəz"},
+{w:"ÇİYƏLƏK",c:"Meyvə-tərəvəz"},
+{w:"KİVİ",c:"Meyvə-tərəvəz"},
+{w:"ANANAS",c:"Meyvə-tərəvəz"},
+{w:"AVOKADO",c:"Meyvə-tərəvəz"},
+{w:"KƏLƏM",c:"Meyvə-tərəvəz"},
+{w:"İSPANAQ",c:"Meyvə-tərəvəz"},
+{w:"BİBƏR",c:"Meyvə-tərəvəz"},
+{w:"QARĞIDALI",c:"Meyvə-tərəvəz"},
+{w:"SALĞAM",c:"Meyvə-tərəvəz"},
+{w:"TURP",c:"Meyvə-tərəvəz"},
+{w:"BROKKOLİ",c:"Meyvə-tərəvəz"},
+// İçkilər
+{w:"SU",c:"İçkilər"},
+{w:"ŞƏRBƏT",c:"İçkilər"},
+{w:"KOMPOT",c:"İçkilər"},
+{w:"LİMONAD",c:"İçkilər"},
+{w:"AYRAN",c:"İçkilər"},
+{w:"ŞƏRAB",c:"İçkilər"},
+{w:"PİVƏ",c:"İçkilər"},
+{w:"SODA",c:"İçkilər"},
+{w:"ŞİRƏ",c:"İçkilər"},
+{w:"KAKAO",c:"İçkilər"},
+{w:"BOZA",c:"İçkilər"},
+// Şəhərlər
+{w:"BAKI",c:"Şəhərlər"},
+{w:"GƏNCƏ",c:"Şəhərlər"},
+{w:"SUMQAYIT",c:"Şəhərlər"},
+{w:"ŞƏKİ",c:"Şəhərlər"},
+{w:"ŞAMAXI",c:"Şəhərlər"},
+{w:"NAXÇIVAN",c:"Şəhərlər"},
+{w:"LƏNKƏRAN",c:"Şəhərlər"},
+{w:"QUBA",c:"Şəhərlər"},
+{w:"QƏBƏLƏ",c:"Şəhərlər"},
+{w:"MİNGƏÇEVİR",c:"Şəhərlər"},
+{w:"ŞUŞA",c:"Şəhərlər"},
+{w:"XANKƏNDİ",c:"Şəhərlər"},
+{w:"ZAQATALA",c:"Şəhərlər"},
+{w:"ASTARA",c:"Şəhərlər"},
+{w:"GÖYÇAY",c:"Şəhərlər"},
+{w:"AĞDAM",c:"Şəhərlər"},
+{w:"FÜZULİ",c:"Şəhərlər"},
+{w:"TƏRTƏR",c:"Şəhərlər"},
+{w:"BƏRDƏ",c:"Şəhərlər"},
+{w:"İMİŞLİ",c:"Şəhərlər"},
+{w:"SALYAN",c:"Şəhərlər"},
+{w:"NEFTÇALA",c:"Şəhərlər"},
+{w:"XAÇMAZ",c:"Şəhərlər"},
+{w:"QUSAR",c:"Şəhərlər"},
+{w:"BALAKƏN",c:"Şəhərlər"},
+{w:"OĞUZ",c:"Şəhərlər"},
+{w:"QAX",c:"Şəhərlər"},
+{w:"YEVLAX",c:"Şəhərlər"},
+{w:"BEYLƏQAN",c:"Şəhərlər"},
+{w:"AĞSTAFA",c:"Şəhərlər"},
+{w:"BİLƏSUVAR",c:"Şəhərlər"},
+{w:"SABİRABAD",c:"Şəhərlər"},
+{w:"SAATLI",c:"Şəhərlər"},
+{w:"ŞİRVAN",c:"Şəhərlər"},
+{w:"DAŞKƏSƏN",c:"Şəhərlər"},
+{w:"GƏDƏBƏY",c:"Şəhərlər"},
+{w:"TOVUZ",c:"Şəhərlər"},
+{w:"QAZAX",c:"Şəhərlər"},
+// Ölkələr
+{w:"TÜRKİYƏ",c:"Ölkələr"},
+{w:"RUSİYA",c:"Ölkələr"},
+{w:"İRAN",c:"Ölkələr"},
+{w:"GÜRCÜSTAN",c:"Ölkələr"},
+{w:"ERMƏNİSTAN",c:"Ölkələr"},
+{w:"ALMANİYA",c:"Ölkələr"},
+{w:"FRANSA",c:"Ölkələr"},
+{w:"İSPANİYA",c:"Ölkələr"},
+{w:"İTALİYA",c:"Ölkələr"},
+{w:"YAPONİYA",c:"Ölkələr"},
+{w:"ÇİN",c:"Ölkələr"},
+{w:"HİNDİSTAN",c:"Ölkələr"},
+{w:"MİSİR",c:"Ölkələr"},
+{w:"BRAZİLİYA",c:"Ölkələr"},
+{w:"KANADA",c:"Ölkələr"},
+{w:"AVSTRALİYA",c:"Ölkələr"},
+{w:"MEKSİKA",c:"Ölkələr"},
+{w:"ARGENTİNA",c:"Ölkələr"},
+{w:"YUNANISTAN",c:"Ölkələr"},
+{w:"PORTUQALİYA",c:"Ölkələr"},
+{w:"HOLLANDİYA",c:"Ölkələr"},
+{w:"BELÇİKA",c:"Ölkələr"},
+{w:"İSVEÇRƏ",c:"Ölkələr"},
+{w:"AVSTRİYA",c:"Ölkələr"},
+{w:"POLŞA",c:"Ölkələr"},
+{w:"UKRAYNA",c:"Ölkələr"},
+{w:"QAZAXISTAN",c:"Ölkələr"},
+{w:"ÖZBƏKİSTAN",c:"Ölkələr"},
+{w:"PAKİSTAN",c:"Ölkələr"},
+{w:"İNGİLTƏRƏ",c:"Ölkələr"},
+{w:"İSVEÇ",c:"Ölkələr"},
+{w:"NORVEÇ",c:"Ölkələr"},
+{w:"DANİMARKA",c:"Ölkələr"},
+{w:"FİNLANDİYA",c:"Ölkələr"},
+{w:"İSLANDİYA",c:"Ölkələr"},
+{w:"İRLANDİYA",c:"Ölkələr"},
+{w:"İRAQ",c:"Ölkələr"},
+{w:"İSRAİL",c:"Ölkələr"},
+{w:"BƏHREYN",c:"Ölkələr"},
+{w:"QƏTƏR",c:"Ölkələr"},
+// Əşyalar
+{w:"STOL",c:"Əşyalar"},
+{w:"STUL",c:"Əşyalar"},
+{w:"QAPI",c:"Əşyalar"},
+{w:"PƏNCƏRƏ",c:"Əşyalar"},
+{w:"KİTAB",c:"Əşyalar"},
+{w:"QƏLƏM",c:"Əşyalar"},
+{w:"DƏFTƏR",c:"Əşyalar"},
+{w:"TELEFON",c:"Əşyalar"},
+{w:"SAAT",c:"Əşyalar"},
+{w:"GÜZGÜ",c:"Əşyalar"},
+{w:"ÇANTA",c:"Əşyalar"},
+{w:"AÇAR",c:"Əşyalar"},
+{w:"QIFIL",c:"Əşyalar"},
+{w:"ÇARPAYI",c:"Əşyalar"},
+{w:"YASTIQ",c:"Əşyalar"},
+{w:"YORĞAN",c:"Əşyalar"},
+{w:"QAŞIQ",c:"Əşyalar"},
+{w:"ÇƏNGƏL",c:"Əşyalar"},
+{w:"BIÇAQ",c:"Əşyalar"},
+{w:"NƏLBƏKİ",c:"Əşyalar"},
+{w:"FİNCAN",c:"Əşyalar"},
+{w:"ŞÜŞƏ",c:"Əşyalar"},
+{w:"LAMPA",c:"Əşyalar"},
+{w:"XALÇA",c:"Əşyalar"},
+{w:"PƏRDƏ",c:"Əşyalar"},
+{w:"DOLAB",c:"Əşyalar"},
+{w:"RƏF",c:"Əşyalar"},
+{w:"GÜLDAN",c:"Əşyalar"},
+{w:"ŞAMDAN",c:"Əşyalar"},
+{w:"SƏBƏT",c:"Əşyalar"},
+{w:"QUTU",c:"Əşyalar"},
+{w:"KAĞIZ",c:"Əşyalar"},
+{w:"ZƏRF",c:"Əşyalar"},
+{w:"ÇİVİ",c:"Əşyalar"},
+{w:"İP",c:"Əşyalar"},
+{w:"TƏRƏZİ",c:"Əşyalar"},
+{w:"ÇİRAQ",c:"Əşyalar"},
+{w:"KOMPAS",c:"Əşyalar"},
+{w:"DÜRBÜN",c:"Əşyalar"},
+{w:"İYNƏ",c:"Əşyalar"},
+// Mətbəx əşyaları
+{w:"QAZAN",c:"Mətbəx əşyaları"},
+{w:"TAVA",c:"Mətbəx əşyaları"},
+{w:"ÇAYNİK",c:"Mətbəx əşyaları"},
+{w:"SOBA",c:"Mətbəx əşyaları"},
+{w:"BUZDOLABI",c:"Mətbəx əşyaları"},
+{w:"MİKSER",c:"Mətbəx əşyaları"},
+{w:"BLENDER",c:"Mətbəx əşyaları"},
+{w:"QRİL",c:"Mətbəx əşyaları"},
+{w:"FIRIN",c:"Mətbəx əşyaları"},
+{w:"SÜZGƏC",c:"Mətbəx əşyaları"},
+{w:"QAPAQ",c:"Mətbəx əşyaları"},
+{w:"TERMOS",c:"Mətbəx əşyaları"},
+// Peşələr
+{w:"HƏKİM",c:"Peşələr"},
+{w:"MÜƏLLİM",c:"Peşələr"},
+{w:"MÜHƏNDİS",c:"Peşələr"},
+{w:"AŞPAZ",c:"Peşələr"},
+{w:"POLİS",c:"Peşələr"},
+{w:"İTFAİYƏÇİ",c:"Peşələr"},
+{w:"RƏSSAM",c:"Peşələr"},
+{w:"YAZIÇI",c:"Peşələr"},
+{w:"JURNALİST",c:"Peşələr"},
+{w:"PİLOT",c:"Peşələr"},
+{w:"SÜRÜCÜ",c:"Peşələr"},
+{w:"DƏRZİ",c:"Peşələr"},
+{w:"DÜLGƏR",c:"Peşələr"},
+{w:"ÇİLİNGƏR",c:"Peşələr"},
+{w:"FERMER",c:"Peşələr"},
+{w:"ALİM",c:"Peşələr"},
+{w:"AKTYOR",c:"Peşələr"},
+{w:"MÜĞƏNNİ",c:"Peşələr"},
+{w:"HƏRBÇİ",c:"Peşələr"},
+{w:"VƏKİL",c:"Peşələr"},
+{w:"HAKİM",c:"Peşələr"},
+{w:"MEMAR",c:"Peşələr"},
+{w:"DİZAYNER",c:"Peşələr"},
+{w:"PROQRAMÇI",c:"Peşələr"},
+{w:"MÜHASİB",c:"Peşələr"},
+{w:"SATICI",c:"Peşələr"},
+{w:"REJİSSOR",c:"Peşələr"},
+{w:"FOTOQRAF",c:"Peşələr"},
+{w:"TƏRCÜMƏÇİ",c:"Peşələr"},
+{w:"ELEKTRİK",c:"Peşələr"},
+{w:"SANTEXNİK",c:"Peşələr"},
+{w:"DƏNİZÇİ",c:"Peşələr"},
+{w:"BAĞBAN",c:"Peşələr"},
+{w:"ÇOBAN",c:"Peşələr"},
+{w:"BALIQÇI",c:"Peşələr"},
+{w:"FARMASEVT",c:"Peşələr"},
+{w:"STOMATOLOQ",c:"Peşələr"},
+{w:"VETERİNAR",c:"Peşələr"},
+{w:"MEXANİK",c:"Peşələr"},
+{w:"BƏRBƏR",c:"Peşələr"},
+// Elm
+{w:"RİYAZİYYAT",c:"Elm"},
+{w:"FİZİKA",c:"Elm"},
+{w:"KİMYA",c:"Elm"},
+{w:"BİOLOGİYA",c:"Elm"},
+{w:"COĞRAFİYA",c:"Elm"},
+{w:"TARİX",c:"Elm"},
+{w:"ASTRONOMİYA",c:"Elm"},
+{w:"ATOM",c:"Elm"},
+{w:"MOLEKUL",c:"Elm"},
+{w:"QRAVİTASİYA",c:"Elm"},
+{w:"TELESKOP",c:"Elm"},
+{w:"MİKROSKOP",c:"Elm"},
+{w:"ENERJİ",c:"Elm"},
+{w:"HÜCEYRƏ",c:"Elm"},
+{w:"GENETİKA",c:"Elm"},
+{w:"EVOLYUSİYA",c:"Elm"},
+{w:"EKOSİSTEM",c:"Elm"},
+{w:"FOTOSİNTEZ",c:"Elm"},
+{w:"MAQNİT",c:"Elm"},
+{w:"ELEKTRON",c:"Elm"},
+{w:"NEYTRON",c:"Elm"},
+{w:"PROTON",c:"Elm"},
+{w:"FİZİOLOGİYA",c:"Elm"},
+{w:"PSİXOLOGİYA",c:"Elm"},
+{w:"SOSİOLOGİYA",c:"Elm"},
+{w:"EKOLOGİYA",c:"Elm"},
+{w:"METEOROLOGİYA",c:"Elm"},
+{w:"NƏZƏRİYYƏ",c:"Elm"},
+{w:"TƏCRÜBƏ",c:"Elm"},
+// Riyaziyyat
+{w:"ƏDƏD",c:"Riyaziyyat"},
+{w:"HƏNDƏSƏ",c:"Riyaziyyat"},
+{w:"CƏBR",c:"Riyaziyyat"},
+{w:"TƏNLİK",c:"Riyaziyyat"},
+{w:"ÜÇBUCAQ",c:"Riyaziyyat"},
+{w:"KVADRAT",c:"Riyaziyyat"},
+{w:"DAİRƏ",c:"Riyaziyyat"},
+{w:"DÜZBUCAQLI",c:"Riyaziyyat"},
+{w:"FAİZ",c:"Riyaziyyat"},
+{w:"KƏSR",c:"Riyaziyyat"},
+{w:"TOPLAMA",c:"Riyaziyyat"},
+{w:"ÇIXMA",c:"Riyaziyyat"},
+{w:"VURMA",c:"Riyaziyyat"},
+{w:"BÖLMƏ",c:"Riyaziyyat"},
+{w:"SIFIR",c:"Riyaziyyat"},
+{w:"SONSUZLUQ",c:"Riyaziyyat"},
+// Bədən üzvləri
+{w:"BAŞ",c:"Bədən üzvləri"},
+{w:"GÖZ",c:"Bədən üzvləri"},
+{w:"QULAQ",c:"Bədən üzvləri"},
+{w:"BURUN",c:"Bədən üzvləri"},
+{w:"AĞIZ",c:"Bədən üzvləri"},
+{w:"ƏL",c:"Bədən üzvləri"},
+{w:"AYAQ",c:"Bədən üzvləri"},
+{w:"ÜRƏK",c:"Bədən üzvləri"},
+{w:"QARIN",c:"Bədən üzvləri"},
+{w:"BOYUN",c:"Bədən üzvləri"},
+{w:"BARMAQ",c:"Bədən üzvləri"},
+{w:"DİRSƏK",c:"Bədən üzvləri"},
+{w:"DİZ",c:"Bədən üzvləri"},
+{w:"SAÇ",c:"Bədən üzvləri"},
+{w:"DİŞ",c:"Bədən üzvləri"},
+{w:"DODAQ",c:"Bədən üzvləri"},
+{w:"QAŞ",c:"Bədən üzvləri"},
+{w:"KİRPİK",c:"Bədən üzvləri"},
+{w:"CİYƏR",c:"Bədən üzvləri"},
+{w:"BEYİN",c:"Bədən üzvləri"},
+{w:"ƏZƏLƏ",c:"Bədən üzvləri"},
+{w:"SÜMÜK",c:"Bədən üzvləri"},
+{w:"DIRNAQ",c:"Bədən üzvləri"},
+{w:"BOĞAZ",c:"Bədən üzvləri"},
+{w:"KÜRƏK",c:"Bədən üzvləri"},
+// Nəqliyyat
+{w:"AVTOBUS",c:"Nəqliyyat"},
+{w:"TƏYYARƏ",c:"Nəqliyyat"},
+{w:"QATAR",c:"Nəqliyyat"},
+{w:"GƏMİ",c:"Nəqliyyat"},
+{w:"VELOSİPED",c:"Nəqliyyat"},
+{w:"MOTOSİKL",c:"Nəqliyyat"},
+{w:"TAKSİ",c:"Nəqliyyat"},
+{w:"METRO",c:"Nəqliyyat"},
+{w:"VERTOLYOT",c:"Nəqliyyat"},
+{w:"TRAKTOR",c:"Nəqliyyat"},
+{w:"TRAMVAY",c:"Nəqliyyat"},
+{w:"RAKET",c:"Nəqliyyat"},
+{w:"AVTOMOBİL",c:"Nəqliyyat"},
+{w:"SKUTER",c:"Nəqliyyat"},
+{w:"QAYIQ",c:"Nəqliyyat"},
+{w:"SUBMARİN",c:"Nəqliyyat"},
+{w:"KAYAK",c:"Nəqliyyat"},
+{w:"ASANSÖR",c:"Nəqliyyat"},
+{w:"ESKALATOR",c:"Nəqliyyat"},
+{w:"FAETON",c:"Nəqliyyat"},
+{w:"ARABA",c:"Nəqliyyat"},
+{w:"YELKƏNLİ",c:"Nəqliyyat"},
+{w:"TROLLEYBUS",c:"Nəqliyyat"},
+{w:"LOKOMOTİV",c:"Nəqliyyat"},
+{w:"PARAŞÜT",c:"Nəqliyyat"},
+// Geyim
+{w:"KÖYNƏK",c:"Geyim"},
+{w:"ŞALVAR",c:"Geyim"},
+{w:"ƏTƏK",c:"Geyim"},
+{w:"AYAQQABI",c:"Geyim"},
+{w:"ŞLYAPA",c:"Geyim"},
+{w:"ƏLCƏK",c:"Geyim"},
+{w:"QALSTUK",c:"Geyim"},
+{w:"PALTO",c:"Geyim"},
+{w:"JAKET",c:"Geyim"},
+{w:"KƏMƏR",c:"Geyim"},
+{w:"ÇORAB",c:"Geyim"},
+{w:"EYNƏK",c:"Geyim"},
+{w:"KOSTYUM",c:"Geyim"},
+{w:"PLAŞ",c:"Geyim"},
+{w:"SVETR",c:"Geyim"},
+{w:"ŞORT",c:"Geyim"},
+{w:"MAYKA",c:"Geyim"},
+{w:"YELEK",c:"Geyim"},
+{w:"ŞAL",c:"Geyim"},
+{w:"BƏRƏ",c:"Geyim"},
+{w:"TUFLİ",c:"Geyim"},
+{w:"ÇİZMƏ",c:"Geyim"},
+{w:"DON",c:"Geyim"},
+{w:"PİJAMA",c:"Geyim"},
+{w:"FUTBOLKA",c:"Geyim"},
+{w:"BLUZ",c:"Geyim"},
+{w:"YAYLIQ",c:"Geyim"},
+{w:"PAPAQ",c:"Geyim"},
+// Rənglər
+{w:"QIRMIZI",c:"Rənglər"},
+{w:"YAŞIL",c:"Rənglər"},
+{w:"SARI",c:"Rənglər"},
+{w:"GÖY",c:"Rənglər"},
+{w:"AĞ",c:"Rənglər"},
+{w:"QARA",c:"Rənglər"},
+{w:"BOZ",c:"Rənglər"},
+{w:"NARINCI",c:"Rənglər"},
+{w:"BƏNÖVŞƏYİ",c:"Rənglər"},
+{w:"QƏHVƏYİ",c:"Rənglər"},
+{w:"ÇƏHRAYI",c:"Rənglər"},
+{w:"GÜMÜŞÜ",c:"Rənglər"},
+{w:"QIZILI",c:"Rənglər"},
+{w:"FİRUZƏYİ",c:"Rənglər"},
+// İdman
+{w:"FUTBOL",c:"İdman"},
+{w:"VOLEYBOL",c:"İdman"},
+{w:"BASKETBOL",c:"İdman"},
+{w:"GÜLƏŞ",c:"İdman"},
+{w:"ÜZGÜÇÜLÜK",c:"İdman"},
+{w:"QAÇIŞ",c:"İdman"},
+{w:"TENNİS",c:"İdman"},
+{w:"ŞAHMAT",c:"İdman"},
+{w:"BOKS",c:"İdman"},
+{w:"XOKKEY",c:"İdman"},
+{w:"REQBİ",c:"İdman"},
+{w:"QOLF",c:"İdman"},
+{w:"BADMİNTON",c:"İdman"},
+{w:"CÜDO",c:"İdman"},
+{w:"KARATE",c:"İdman"},
+{w:"TAEKVONDO",c:"İdman"},
+{w:"ATLETİKA",c:"İdman"},
+{w:"ATÇILIQ",c:"İdman"},
+{w:"KRİKET",c:"İdman"},
+{w:"BEYSBOL",c:"İdman"},
+{w:"OXATMA",c:"İdman"},
+{w:"MARAFON",c:"İdman"},
+{w:"GİMNASTİKA",c:"İdman"},
+{w:"BİLYARD",c:"İdman"},
+// Musiqi
+{w:"GİTARA",c:"Musiqi"},
+{w:"PİANİNO",c:"Musiqi"},
+{w:"TAR",c:"Musiqi"},
+{w:"KAMANÇA",c:"Musiqi"},
+{w:"NAĞARA",c:"Musiqi"},
+{w:"MUĞAM",c:"Musiqi"},
+{w:"MAHNI",c:"Musiqi"},
+{w:"NOTA",c:"Musiqi"},
+{w:"ORKESTR",c:"Musiqi"},
+{w:"KLARNET",c:"Musiqi"},
+{w:"BALABAN",c:"Musiqi"},
+{w:"ZURNA",c:"Musiqi"},
+{w:"DƏF",c:"Musiqi"},
+{w:"UD",c:"Musiqi"},
+{w:"SKRİPKA",c:"Musiqi"},
+{w:"FLEYTA",c:"Musiqi"},
+{w:"TRUBA",c:"Musiqi"},
+{w:"SİMFONİYA",c:"Musiqi"},
+{w:"ARFA",c:"Musiqi"},
+{w:"SAKSAFON",c:"Musiqi"},
+{w:"ORQAN",c:"Musiqi"},
+{w:"REP",c:"Musiqi"},
+{w:"CAZ",c:"Musiqi"},
+// Ailə
+{w:"ANA",c:"Ailə"},
+{w:"ATA",c:"Ailə"},
+{w:"QARDAŞ",c:"Ailə"},
+{w:"BACI",c:"Ailə"},
+{w:"NƏNƏ",c:"Ailə"},
+{w:"BABA",c:"Ailə"},
+{w:"ƏMİ",c:"Ailə"},
+{w:"XALA",c:"Ailə"},
+{w:"BİBİ",c:"Ailə"},
+{w:"DAYI",c:"Ailə"},
+{w:"NƏVƏ",c:"Ailə"},
+{w:"ƏR",c:"Ailə"},
+{w:"ARVAD",c:"Ailə"},
+{w:"ÖVLAD",c:"Ailə"},
+{w:"GƏLİN",c:"Ailə"},
+{w:"KÜRƏKƏN",c:"Ailə"},
+{w:"BALDIZ",c:"Ailə"},
+{w:"QAYINANA",c:"Ailə"},
+// Məktəb
+{w:"MƏKTƏB",c:"Məktəb"},
+{w:"ŞAGİRD",c:"Məktəb"},
+{w:"LÖVHƏ",c:"Məktəb"},
+{w:"SİLGİ",c:"Məktəb"},
+{w:"LİNEYKA",c:"Məktəb"},
+{w:"İMTAHAN",c:"Məktəb"},
+{w:"DƏRS",c:"Məktəb"},
+{w:"SİNİF",c:"Məktəb"},
+{w:"ZƏNG",c:"Məktəb"},
+{w:"DİPLOM",c:"Məktəb"},
+{w:"KİTABXANA",c:"Məktəb"},
+{w:"QLOBUS",c:"Məktəb"},
+{w:"PARTA",c:"Məktəb"},
+{w:"KURS",c:"Məktəb"},
+{w:"UNİVERSİTET",c:"Məktəb"},
+{w:"TƏLƏBƏ",c:"Məktəb"},
+{w:"PROFESSOR",c:"Məktəb"},
+{w:"REKTOR",c:"Məktəb"},
+// Emosiyalar
+{w:"SEVİNC",c:"Emosiyalar"},
+{w:"KƏDƏR",c:"Emosiyalar"},
+{w:"QORXU",c:"Emosiyalar"},
+{w:"HƏYƏCAN",c:"Emosiyalar"},
+{w:"QƏZƏB",c:"Emosiyalar"},
+{w:"TƏƏCCÜB",c:"Emosiyalar"},
+{w:"UTANMA",c:"Emosiyalar"},
+{w:"SEVGİ",c:"Emosiyalar"},
+{w:"NİFRƏT",c:"Emosiyalar"},
+{w:"YORĞUNLUQ",c:"Emosiyalar"},
+{w:"ÜMİD",c:"Emosiyalar"},
+{w:"PEŞMANLIQ",c:"Emosiyalar"},
+{w:"QISQANCLIQ",c:"Emosiyalar"},
+{w:"TƏNHALIQ",c:"Emosiyalar"},
+{w:"RAHATLIQ",c:"Emosiyalar"},
+{w:"NARAHATLIQ",c:"Emosiyalar"},
+// Gündəlik həyat
+{w:"SƏHƏR",c:"Gündəlik həyat"},
+{w:"GÜNORTA",c:"Gündəlik həyat"},
+{w:"AXŞAM",c:"Gündəlik həyat"},
+{w:"GECƏ",c:"Gündəlik həyat"},
+{w:"HƏFTƏ",c:"Gündəlik həyat"},
+{w:"TƏQVİM",c:"Gündəlik həyat"},
+{w:"İL",c:"Gündəlik həyat"},
+{w:"DƏQİQƏ",c:"Gündəlik həyat"},
+{w:"SANİYƏ",c:"Gündəlik həyat"},
+{w:"TƏTİL",c:"Gündəlik həyat"},
+{w:"BAYRAM",c:"Gündəlik həyat"},
+{w:"YUXU",c:"Gündəlik həyat"},
+{w:"SƏYAHƏT",c:"Gündəlik həyat"},
+{w:"İŞ",c:"Gündəlik həyat"},
+{w:"İSTİRAHƏT",c:"Gündəlik həyat"},
+{w:"GƏZİNTİ",c:"Gündəlik həyat"},
+{w:"ALIŞVERİŞ",c:"Gündəlik həyat"},
+{w:"TƏMİZLİK",c:"Gündəlik həyat"},
+// Texnologiya
+{w:"KOMPÜTER",c:"Texnologiya"},
+{w:"İNTERNET",c:"Texnologiya"},
+{w:"KLAVİATURA",c:"Texnologiya"},
+{w:"MONİTOR",c:"Texnologiya"},
+{w:"PRİNTER",c:"Texnologiya"},
+{w:"SKANER",c:"Texnologiya"},
+{w:"KAMERA",c:"Texnologiya"},
+{w:"MİKROFON",c:"Texnologiya"},
+{w:"NAUŞNİK",c:"Texnologiya"},
+{w:"PLANŞET",c:"Texnologiya"},
+{w:"NOUTBUK",c:"Texnologiya"},
+{w:"SERVER",c:"Texnologiya"},
+{w:"PROQRAM",c:"Texnologiya"},
+{w:"TƏTBİQ",c:"Texnologiya"},
+{w:"SAYT",c:"Texnologiya"},
+{w:"ROBOT",c:"Texnologiya"},
+{w:"DRON",c:"Texnologiya"},
+{w:"VİRUS",c:"Texnologiya"},
+{w:"ŞİFRƏ",c:"Texnologiya"},
+{w:"BATAREYA",c:"Texnologiya"},
+{w:"ŞARJ",c:"Texnologiya"},
+{w:"YADDAŞ",c:"Texnologiya"},
+{w:"PROSESSOR",c:"Texnologiya"},
+{w:"EKRAN",c:"Texnologiya"},
+{w:"KABEL",c:"Texnologiya"},
+{w:"ŞƏBƏKƏ",c:"Texnologiya"},
+{w:"FAYL",c:"Texnologiya"},
+{w:"SENSOR",c:"Texnologiya"},
+{w:"ÇİP",c:"Texnologiya"},
+{w:"ALQORİTM",c:"Texnologiya"},
+// Alətlər
+{w:"ÇƏKİC",c:"Alətlər"},
+{w:"BALTA",c:"Alətlər"},
+{w:"MİSMAR",c:"Alətlər"},
+{w:"QAYÇI",c:"Alətlər"},
+{w:"YAPIŞQAN",c:"Alətlər"},
+{w:"TESTƏRƏ",c:"Alətlər"},
+{w:"BURĞU",c:"Alətlər"},
+{w:"VİNT",c:"Alətlər"},
+{w:"XƏTKEŞ",c:"Alətlər"},
+{w:"RƏNDƏ",c:"Alətlər"},
+{w:"KƏLBƏTİN",c:"Alətlər"},
+{w:"MAŞA",c:"Alətlər"},
+{w:"BEL",c:"Alətlər"},
+{w:"TORNAVİDA",c:"Alətlər"},
+// Hərbi
+{w:"ƏSGƏR",c:"Hərbi"},
+{w:"TANK",c:"Hərbi"},
+{w:"TÜFƏNG",c:"Hərbi"},
+{w:"TOP",c:"Hərbi"},
+{w:"QILINC",c:"Hərbi"},
+{w:"QALXAN",c:"Hərbi"},
+{w:"ZİREH",c:"Hərbi"},
+{w:"BAYRAQ",c:"Hərbi"},
+{w:"ORDU",c:"Hərbi"},
+{w:"SƏRHƏD",c:"Hərbi"},
+{w:"SİLAH",c:"Hərbi"},
+{w:"PATRON",c:"Hərbi"},
+{w:"MİNA",c:"Hərbi"},
+{w:"DÖYÜŞ",c:"Hərbi"},
+{w:"QƏLƏBƏ",c:"Hərbi"},
+{w:"DÜŞMƏN",c:"Hərbi"},
+{w:"MÜHARİBƏ",c:"Hərbi"},
+// Tikinti
+{w:"BİNA",c:"Tikinti"},
+{w:"KÖRPÜ",c:"Tikinti"},
+{w:"DİVAR",c:"Tikinti"},
+{w:"DAM",c:"Tikinti"},
+{w:"KƏRPİC",c:"Tikinti"},
+{w:"BETON",c:"Tikinti"},
+{w:"SEMENT",c:"Tikinti"},
+{w:"QÜLLƏ",c:"Tikinti"},
+{w:"MİNARƏ",c:"Tikinti"},
+{w:"GÜMBƏZ",c:"Tikinti"},
+{w:"SÜTUN",c:"Tikinti"},
+{w:"PİLLƏKƏN",c:"Tikinti"},
+{w:"BALKON",c:"Tikinti"},
+{w:"ZİRZƏMİ",c:"Tikinti"},
+{w:"BÜNÖVRƏ",c:"Tikinti"},
+// Metallar və daşlar
+{w:"QIZIL",c:"Metallar və daşlar"},
+{w:"GÜMÜŞ",c:"Metallar və daşlar"},
+{w:"DƏMİR",c:"Metallar və daşlar"},
+{w:"MİS",c:"Metallar və daşlar"},
+{w:"ALÜMİNİUM",c:"Metallar və daşlar"},
+{w:"POLAD",c:"Metallar və daşlar"},
+{w:"BÜRÜNC",c:"Metallar və daşlar"},
+{w:"QURĞUŞUN",c:"Metallar və daşlar"},
+{w:"ELMAS",c:"Metallar və daşlar"},
+{w:"YAQUT",c:"Metallar və daşlar"},
+{w:"ZÜMRÜD",c:"Metallar və daşlar"},
+{w:"MİRVARİ",c:"Metallar və daşlar"},
+{w:"ƏQİQ",c:"Metallar və daşlar"},
+{w:"FİRUZƏ",c:"Metallar və daşlar"},
+{w:"XROM",c:"Metallar və daşlar"},
+// Bayramlar
+{w:"NOVRUZ",c:"Bayramlar"},
+{w:"TOY",c:"Bayramlar"},
+{w:"YUBİLEY",c:"Bayramlar"},
+{w:"KARNAVAL",c:"Bayramlar"},
+{w:"FESTİVAL",c:"Bayramlar"},
+{w:"MƏRASİM",c:"Bayramlar"},
+{w:"QONAQLIQ",c:"Bayramlar"},
+{w:"SƏMƏNİ",c:"Bayramlar"},
+{w:"TONQAL",c:"Bayramlar"},
+{w:"FEYERVERK",c:"Bayramlar"},
+{w:"PARAD",c:"Bayramlar"},
+{w:"SALYUT",c:"Bayramlar"},
+// Fəsillər və təqvim
+{w:"YAZ",c:"Fəsillər və təqvim"},
+{w:"YAY",c:"Fəsillər və təqvim"},
+{w:"PAYIZ",c:"Fəsillər və təqvim"},
+{w:"QIŞ",c:"Fəsillər və təqvim"},
+{w:"YANVAR",c:"Fəsillər və təqvim"},
+{w:"FEVRAL",c:"Fəsillər və təqvim"},
+{w:"MART",c:"Fəsillər və təqvim"},
+{w:"APREL",c:"Fəsillər və təqvim"},
+{w:"MAY",c:"Fəsillər və təqvim"},
+{w:"İYUN",c:"Fəsillər və təqvim"},
+{w:"İYUL",c:"Fəsillər və təqvim"},
+{w:"AVQUST",c:"Fəsillər və təqvim"},
+{w:"SENTYABR",c:"Fəsillər və təqvim"},
+{w:"OKTYABR",c:"Fəsillər və təqvim"},
+{w:"NOYABR",c:"Fəsillər və təqvim"},
+{w:"DEKABR",c:"Fəsillər və təqvim"},
+{w:"ÇƏRŞƏNBƏ",c:"Fəsillər və təqvim"},
+{w:"CÜMƏ",c:"Fəsillər və təqvim"},
+{w:"ŞƏNBƏ",c:"Fəsillər və təqvim"},
+{w:"BAZAR",c:"Fəsillər və təqvim"},
+// Ədəbiyyat
+{w:"ROMAN",c:"Ədəbiyyat"},
+{w:"HEKAYƏ",c:"Ədəbiyyat"},
+{w:"ŞEİR",c:"Ədəbiyyat"},
+{w:"NAĞIL",c:"Ədəbiyyat"},
+{w:"TEATR",c:"Ədəbiyyat"},
+{w:"KİNO",c:"Ədəbiyyat"},
+{w:"FİLM",c:"Ədəbiyyat"},
+{w:"RƏSM",c:"Ədəbiyyat"},
+{w:"HEYKƏL",c:"Ədəbiyyat"},
+{w:"MUZEY",c:"Ədəbiyyat"},
+{w:"QALEREYA",c:"Ədəbiyyat"},
+{w:"SƏHNƏ",c:"Ədəbiyyat"},
+{w:"ROL",c:"Ədəbiyyat"},
+{w:"ALQIŞ",c:"Ədəbiyyat"},
+{w:"SSENARİ",c:"Ədəbiyyat"},
+{w:"JANR",c:"Ədəbiyyat"},
+{w:"MİF",c:"Ədəbiyyat"},
+{w:"ŞAİR",c:"Ədəbiyyat"},
+// Oyunlar
+{w:"DAMA",c:"Oyunlar"},
+{w:"NƏRD",c:"Oyunlar"},
+{w:"PAZL",c:"Oyunlar"},
+{w:"KUKLA",c:"Oyunlar"},
+{w:"ZƏR",c:"Oyunlar"},
+{w:"FIRLANĞIC",c:"Oyunlar"},
+{w:"VİKTORİNA",c:"Oyunlar"},
+{w:"SIRK",c:"Oyunlar"},
+{w:"ATTRAKSİON",c:"Oyunlar"},
+{w:"KARUSEL",c:"Oyunlar"},
+{w:"BATUT",c:"Oyunlar"},
+// Tibb
+{w:"DƏRMAN",c:"Tibb"},
+{w:"XƏSTƏXANA",c:"Tibb"},
+{w:"ŞPRİS",c:"Tibb"},
+{w:"TERMOMETR",c:"Tibb"},
+{w:"SARĞI",c:"Tibb"},
+{w:"ƏMƏLİYYAT",c:"Tibb"},
+{w:"DİAQNOZ",c:"Tibb"},
+{w:"VİTAMİN",c:"Tibb"},
+{w:"ANALİZ",c:"Tibb"},
+{w:"RENTGEN",c:"Tibb"},
+{w:"NƏBZ",c:"Tibb"},
+{w:"TƏZYİQ",c:"Tibb"},
+{w:"AŞI",c:"Tibb"},
+{w:"STETOSKOP",c:"Tibb"},
+{w:"GİPS",c:"Tibb"},
+{w:"YARA",c:"Tibb"},
+{w:"XƏSTƏ",c:"Tibb"},
+{w:"SAĞALMA",c:"Tibb"},
+{w:"MİKROB",c:"Tibb"},
+{w:"ALLERGİYA",c:"Tibb"},
+{w:"ANESTEZİYA",c:"Tibb"},
+{w:"XƏSTƏLİK",c:"Tibb"},
+{w:"SAĞLAMLIQ",c:"Tibb"},
+// Kimyəvi elementlər
+{w:"HİDROGEN",c:"Kimyəvi elementlər"},
+{w:"OKSİGEN",c:"Kimyəvi elementlər"},
+{w:"KARBON",c:"Kimyəvi elementlər"},
+{w:"AZOT",c:"Kimyəvi elementlər"},
+{w:"XLOR",c:"Kimyəvi elementlər"},
+{w:"NATRİUM",c:"Kimyəvi elementlər"},
+{w:"KALSİUM",c:"Kimyəvi elementlər"},
+{w:"MAQNEZİUM",c:"Kimyəvi elementlər"},
+{w:"SİNK",c:"Kimyəvi elementlər"},
+{w:"NİKEL",c:"Kimyəvi elementlər"},
+{w:"KOBALT",c:"Kimyəvi elementlər"},
+{w:"PLATİN",c:"Kimyəvi elementlər"},
+{w:"FOSFOR",c:"Kimyəvi elementlər"},
+{w:"KÜKÜRD",c:"Kimyəvi elementlər"},
+{w:"YOD",c:"Kimyəvi elementlər"},
+{w:"HELİUM",c:"Kimyəvi elementlər"},
+{w:"ARQON",c:"Kimyəvi elementlər"},
+{w:"NEON",c:"Kimyəvi elementlər"},
+{w:"KRİPTON",c:"Kimyəvi elementlər"},
+{w:"RADON",c:"Kimyəvi elementlər"},
+{w:"SİLİSİUM",c:"Kimyəvi elementlər"},
+{w:"TİTAN",c:"Kimyəvi elementlər"},
+// Ticarət
+{w:"TİCARƏT",c:"Ticarət"},
+{w:"PUL",c:"Ticarət"},
+{w:"QİYMƏT",c:"Ticarət"},
+{w:"MAĞAZA",c:"Ticarət"},
+{w:"BANK",c:"Ticarət"},
+{w:"KREDİT",c:"Ticarət"},
+{w:"ALICI",c:"Ticarət"},
+{w:"ŞİRKƏT",c:"Ticarət"},
+{w:"BİZNES",c:"Ticarət"},
+{w:"İXRAC",c:"Ticarət"},
+{w:"İDXAL",c:"Ticarət"},
+{w:"VERGİ",c:"Ticarət"},
+{w:"BÜDCƏ",c:"Ticarət"},
+{w:"SƏRMAYƏ",c:"Ticarət"},
+{w:"BORC",c:"Ticarət"},
+{w:"FAKTURA",c:"Ticarət"},
+{w:"SIĞORTA",c:"Ticarət"},
+// Hüquq və dövlət
+{w:"QANUN",c:"Hüquq və dövlət"},
+{w:"MƏHKƏMƏ",c:"Hüquq və dövlət"},
+{w:"HÖKUMƏT",c:"Hüquq və dövlət"},
+{w:"PREZİDENT",c:"Hüquq və dövlət"},
+{w:"PARLAMENT",c:"Hüquq və dövlət"},
+{w:"SEÇKİ",c:"Hüquq və dövlət"},
+{w:"KONSTİTUSİYA",c:"Hüquq və dövlət"},
+{w:"VƏTƏNDAŞ",c:"Hüquq və dövlət"},
+{w:"SƏFİRLİK",c:"Hüquq və dövlət"},
+{w:"PASPORT",c:"Hüquq və dövlət"},
+{w:"VİZA",c:"Hüquq və dövlət"},
+{w:"ƏDALƏT",c:"Hüquq və dövlət"},
+{w:"CƏZA",c:"Hüquq və dövlət"},
+{w:"QANUNVERİCİLİK",c:"Hüquq və dövlət"},
+// Coğrafiya
+{w:"XƏRİTƏ",c:"Coğrafiya"},
+{w:"QİTƏ",c:"Coğrafiya"},
+{w:"OKEAN",c:"Coğrafiya"},
+{w:"EKVATOR",c:"Coğrafiya"},
+{w:"QÜTB",c:"Coğrafiya"},
+{w:"PAYTAXT",c:"Coğrafiya"},
+{w:"RAYON",c:"Coğrafiya"},
+{w:"KƏND",c:"Coğrafiya"},
+{w:"ŞƏHƏR",c:"Coğrafiya"},
+{w:"TUNEL",c:"Coğrafiya"},
+{w:"MAYAK",c:"Coğrafiya"},
+{w:"LİMAN",c:"Coğrafiya"},
+{w:"AEROPORT",c:"Coğrafiya"},
+{w:"STANSİYA",c:"Coğrafiya"},
+{w:"DELTA",c:"Coğrafiya"},
+{w:"ÇÖL",c:"Coğrafiya"},
+{w:"VAHƏ",c:"Coğrafiya"},
+{w:"ARXİPELAQ",c:"Coğrafiya"},
+// Dünya şəhərləri
+{w:"PARİS",c:"Dünya şəhərləri"},
+{w:"LONDON",c:"Dünya şəhərləri"},
+{w:"ROMA",c:"Dünya şəhərləri"},
+{w:"MADRİD",c:"Dünya şəhərləri"},
+{w:"BERLİN",c:"Dünya şəhərləri"},
+{w:"VYANA",c:"Dünya şəhərləri"},
+{w:"PRAQA",c:"Dünya şəhərləri"},
+{w:"VARŞAVA",c:"Dünya şəhərləri"},
+{w:"MOSKVA",c:"Dünya şəhərləri"},
+{w:"PEKİN",c:"Dünya şəhərləri"},
+{w:"TOKİO",c:"Dünya şəhərləri"},
+{w:"DUBAY",c:"Dünya şəhərləri"},
+{w:"İSTANBUL",c:"Dünya şəhərləri"},
+{w:"QAHİRƏ",c:"Dünya şəhərləri"},
+{w:"DELİ",c:"Dünya şəhərləri"},
+// Nağıl və fantastika
+{w:"PƏRİ",c:"Nağıl və fantastika"},
+{w:"ƏJDAHA",c:"Nağıl və fantastika"},
+{w:"CİN",c:"Nağıl və fantastika"},
+{w:"DEV",c:"Nağıl və fantastika"},
+{w:"CADUGƏR",c:"Nağıl və fantastika"},
+{w:"SEHRBAZ",c:"Nağıl və fantastika"},
+{w:"QƏHRƏMAN",c:"Nağıl və fantastika"},
+{w:"VAMPİR",c:"Nağıl və fantastika"},
+{w:"ZOMBİ",c:"Nağıl və fantastika"},
+{w:"PADŞAH",c:"Nağıl və fantastika"},
+{w:"MƏLİKƏ",c:"Nağıl və fantastika"},
+// Rəqəmlər
+{w:"BİR",c:"Rəqəmlər"},
+{w:"İKİ",c:"Rəqəmlər"},
+{w:"ÜÇ",c:"Rəqəmlər"},
+{w:"DÖRD",c:"Rəqəmlər"},
+{w:"BEŞ",c:"Rəqəmlər"},
+{w:"ALTI",c:"Rəqəmlər"},
+{w:"YEDDİ",c:"Rəqəmlər"},
+{w:"SƏKKİZ",c:"Rəqəmlər"},
+{w:"DOQQUZ",c:"Rəqəmlər"},
+{w:"ON",c:"Rəqəmlər"},
+// Milli mətbəx
+{w:"QUTAB",c:"Milli mətbəx"},
+{w:"PİTİ",c:"Milli mətbəx"},
+{w:"DÜŞBƏRƏ",c:"Milli mətbəx"},
+{w:"BADAMBURA",c:"Milli mətbəx"},
+{w:"PAXLAVA",c:"Milli mətbəx"},
+{w:"ŞOR",c:"Milli mətbəx"},
+{w:"KƏTƏ",c:"Milli mətbəx"},
+{w:"DOVĞA",c:"Milli mətbəx"},
+{w:"XƏMİR",c:"Milli mətbəx"},
+{w:"LAVAŞ",c:"Milli mətbəx"},
+{w:"SƏNGƏK",c:"Milli mətbəx"},
+{w:"TƏNDİR",c:"Milli mətbəx"},
+{w:"MÜTƏKKƏ",c:"Milli mətbəx"},
+{w:"ŞİRVANŞAHI",c:"Milli mətbəx"},
+{w:"ÇUÇXELA",c:"Milli mətbəx"},
+{w:"ŞOROBA",c:"Milli mətbəx"},
+{w:"QİYMƏ",c:"Milli mətbəx"},
+{w:"İÇLİK",c:"Milli mətbəx"},
+{w:"QIZARTMA",c:"Milli mətbəx"},
+// Xalça və toxuculuq
+{w:"YUN",c:"Xalça və toxuculuq"},
+{w:"TOXUCULUQ",c:"Xalça və toxuculuq"},
+{w:"DƏZGAH",c:"Xalça və toxuculuq"},
+{w:"NAXIŞ",c:"Xalça və toxuculuq"},
+{w:"KİLİM",c:"Xalça və toxuculuq"},
+{w:"İPƏK",c:"Xalça və toxuculuq"},
+{w:"PALAZ",c:"Xalça və toxuculuq"},
+{w:"BOYAQ",c:"Xalça və toxuculuq"},
+{w:"ÇUVAL",c:"Xalça və toxuculuq"},
+{w:"MƏFRƏŞ",c:"Xalça və toxuculuq"},
+{w:"DÜYÜN",c:"Xalça və toxuculuq"},
+{w:"SAP",c:"Xalça və toxuculuq"},
+{w:"HÖRGÜ",c:"Xalça və toxuculuq"},
+{w:"TOXUMA",c:"Xalça və toxuculuq"},
+{w:"MİL",c:"Xalça və toxuculuq"},
+{w:"ÇARX",c:"Xalça və toxuculuq"},
+{w:"ORNAMENT",c:"Xalça və toxuculuq"},
+{w:"ÇEŞNİ",c:"Xalça və toxuculuq"},
+// Neft sənayesi
+{w:"NEFT",c:"Neft sənayesi"},
+{w:"BURUQ",c:"Neft sənayesi"},
+{w:"QUYU",c:"Neft sənayesi"},
+{w:"TANKER",c:"Neft sənayesi"},
+{w:"NEFTÇİ",c:"Neft sənayesi"},
+{w:"PLATFORMA",c:"Neft sənayesi"},
+{w:"BORU",c:"Neft sənayesi"},
+{w:"RAFİNERİ",c:"Neft sənayesi"},
+{w:"YANACAQ",c:"Neft sənayesi"},
+{w:"BENZİN",c:"Neft sənayesi"},
+{w:"MAZUT",c:"Neft sənayesi"},
+{w:"KƏROSİN",c:"Neft sənayesi"},
+{w:"HASİLAT",c:"Neft sənayesi"},
+{w:"YATAQ",c:"Neft sənayesi"},
+{w:"SONDAJ",c:"Neft sənayesi"},
+{w:"PARAFİN",c:"Neft sənayesi"},
+{w:"BİTUM",c:"Neft sənayesi"},
+{w:"SKVAJİNA",c:"Neft sənayesi"},
+{w:"ZAVOD",c:"Neft sənayesi"},
+{w:"NEFTAYIRMA",c:"Neft sənayesi"},
+{w:"TERMİNAL",c:"Neft sənayesi"},
+{w:"PORT",c:"Neft sənayesi"},
+// Toy adətləri
+{w:"BƏY",c:"Toy adətləri"},
+{w:"NİŞAN",c:"Toy adətləri"},
+{w:"XINA",c:"Toy adətləri"},
+{w:"CEHİZ",c:"Toy adətləri"},
+{w:"TOYXANA",c:"Toy adətləri"},
+{w:"QONAQ",c:"Toy adətləri"},
+{w:"HƏDİYYƏ",c:"Toy adətləri"},
+{w:"ÜZÜK",c:"Toy adətləri"},
+{w:"DƏVƏTNAMƏ",c:"Toy adətləri"},
+{w:"MUSİQİÇİ",c:"Toy adətləri"},
+{w:"SÜFRƏ",c:"Toy adətləri"},
+{w:"BƏZƏK",c:"Toy adətləri"},
+{w:"GƏLİNLİK",c:"Toy adətləri"},
+{w:"DAMAT",c:"Toy adətləri"},
+{w:"NİŞANLI",c:"Toy adətləri"},
+{w:"ÇEPKƏN",c:"Toy adətləri"},
+{w:"SEVGİLİ",c:"Toy adətləri"},
+{w:"ANDİÇMƏ",c:"Toy adətləri"},
+{w:"ŞƏNLİK",c:"Toy adətləri"},
+// Bədən hərəkətləri
+{w:"QAÇMAQ",c:"Bədən hərəkətləri"},
+{w:"YERİMƏK",c:"Bədən hərəkətləri"},
+{w:"SIÇRAMAQ",c:"Bədən hərəkətləri"},
+{w:"ÜZMƏK",c:"Bədən hərəkətləri"},
+{w:"UÇMAQ",c:"Bədən hərəkətləri"},
+{w:"SÜRÜNMƏK",c:"Bədən hərəkətləri"},
+{w:"DAYANMAQ",c:"Bədən hərəkətləri"},
+{w:"OTURMAQ",c:"Bədən hərəkətləri"},
+{w:"DURMAQ",c:"Bədən hərəkətləri"},
+{w:"DÖNMƏK",c:"Bədən hərəkətləri"},
+{w:"ƏYİLMƏK",c:"Bədən hərəkətləri"},
+{w:"ATLAMAQ",c:"Bədən hərəkətləri"},
+{w:"YIXILMAQ",c:"Bədən hərəkətləri"},
+{w:"DAYANIŞ",c:"Bədən hərəkətləri"},
+{w:"TƏPİK",c:"Bədən hərəkətləri"},
+{w:"YUMRUQ",c:"Bədən hərəkətləri"},
+{w:"YAYINMAQ",c:"Bədən hərəkətləri"},
+{w:"SÜZMƏK",c:"Bədən hərəkətləri"},
+{w:"DIRMAŞMAQ",c:"Bədən hərəkətləri"},
+{w:"ÇÖMƏLMƏK",c:"Bədən hərəkətləri"},
+{w:"YELLƏNMƏK",c:"Bədən hərəkətləri"},
+{w:"DÖYÜNMƏK",c:"Bədən hərəkətləri"},
+{w:"TİTRƏMƏK",c:"Bədən hərəkətləri"},
+{w:"ÇEVİRMƏK",c:"Bədən hərəkətləri"},
+{w:"UZANMAQ",c:"Bədən hərəkətləri"},
+// Sifətlər
+{w:"BÖYÜK",c:"Sifətlər"},
+{w:"KİÇİK",c:"Sifətlər"},
+{w:"UZUN",c:"Sifətlər"},
+{w:"QISA",c:"Sifətlər"},
+{w:"GENİŞ",c:"Sifətlər"},
+{w:"DAR",c:"Sifətlər"},
+{w:"AĞIR",c:"Sifətlər"},
+{w:"YÜNGÜL",c:"Sifətlər"},
+{w:"TƏMİZ",c:"Sifətlər"},
+{w:"ÇİRKLİ",c:"Sifətlər"},
+{w:"GÖZƏL",c:"Sifətlər"},
+{w:"ÇİRKİN",c:"Sifətlər"},
+{w:"GÜCLÜ",c:"Sifətlər"},
+{w:"ZƏİF",c:"Sifətlər"},
+{w:"SÜRƏTLİ",c:"Sifətlər"},
+{w:"YAVAŞ",c:"Sifətlər"},
+{w:"DƏRİN",c:"Sifətlər"},
+{w:"DAYAZ",c:"Sifətlər"},
+{w:"SƏRT",c:"Sifətlər"},
+{w:"YUMŞAQ",c:"Sifətlər"},
+{w:"KƏSKİN",c:"Sifətlər"},
+{w:"KÜT",c:"Sifətlər"},
+{w:"PARLAQ",c:"Sifətlər"},
+{w:"TÜND",c:"Sifətlər"},
+{w:"AÇIQ",c:"Sifətlər"},
+{w:"QOYU",c:"Sifətlər"},
+{w:"DÜZ",c:"Sifətlər"},
+{w:"ƏYRİ",c:"Sifətlər"},
+{w:"KEYFİYYƏTLİ",c:"Sifətlər"},
+{w:"UCUZ",c:"Sifətlər"},
+{w:"BAHALI",c:"Sifətlər"},
+{w:"İSTEDADLI",c:"Sifətlər"},
+{w:"BACARIQLI",c:"Sifətlər"},
+// Din və mənəviyyat
+{w:"DUA",c:"Din və mənəviyyat"},
+{w:"MƏSCİD",c:"Din və mənəviyyat"},
+{w:"KİLSƏ",c:"Din və mənəviyyat"},
+{w:"ORUC",c:"Din və mənəviyyat"},
+{w:"QURAN",c:"Din və mənəviyyat"},
+{w:"İMAM",c:"Din və mənəviyyat"},
+{w:"DİN",c:"Din və mənəviyyat"},
+{w:"İMAN",c:"Din və mənəviyyat"},
+{w:"SƏDƏQƏ",c:"Din və mənəviyyat"},
+{w:"ZİYARƏT",c:"Din və mənəviyyat"},
+{w:"İBADƏT",c:"Din və mənəviyyat"},
+{w:"MƏNƏVİYYAT",c:"Din və mənəviyyat"},
+{w:"HƏCC",c:"Din və mənəviyyat"},
+{w:"MİNARƏT",c:"Din və mənəviyyat"},
+{w:"MÖMİN",c:"Din və mənəviyyat"},
+{w:"TÖVBƏ",c:"Din və mənəviyyat"},
+{w:"MÜQƏDDƏS",c:"Din və mənəviyyat"},
+{w:"PEYĞƏMBƏR",c:"Din və mənəviyyat"},
+{w:"MƏLƏK",c:"Din və mənəviyyat"},
+{w:"CƏNNƏT",c:"Din və mənəviyyat"},
+{w:"CƏHƏNNƏM",c:"Din və mənəviyyat"},
+{w:"TƏQVA",c:"Din və mənəviyyat"},
+// Fəlsəfə
+{w:"MƏNTİQ",c:"Fəlsəfə"},
+{w:"HƏQİQƏT",c:"Fəlsəfə"},
+{w:"VARLIQ",c:"Fəlsəfə"},
+{w:"ŞÜUR",c:"Fəlsəfə"},
+{w:"ƏXLAQ",c:"Fəlsəfə"},
+{w:"AZADLIQ",c:"Fəlsəfə"},
+{w:"İRADƏ",c:"Fəlsəfə"},
+{w:"İDEYA",c:"Fəlsəfə"},
+{w:"DÜŞÜNCƏ",c:"Fəlsəfə"},
+{w:"MAHİYYƏT",c:"Fəlsəfə"},
+{w:"SUBYEKT",c:"Fəlsəfə"},
+{w:"OBYEKT",c:"Fəlsəfə"},
+{w:"DƏYƏR",c:"Fəlsəfə"},
+{w:"ŞÜBHƏ",c:"Fəlsəfə"},
+{w:"İNAM",c:"Fəlsəfə"},
+{w:"ZİDDİYYƏT",c:"Fəlsəfə"},
+{w:"İDRAK",c:"Fəlsəfə"},
+{w:"MÖVCUDLUQ",c:"Fəlsəfə"},
+{w:"ANLAM",c:"Fəlsəfə"},
+{w:"MƏQSƏD",c:"Fəlsəfə"},
+{w:"TƏFƏKKÜR",c:"Fəlsəfə"},
+// Memarlıq
+{w:"GÜNBƏZ",c:"Memarlıq"},
+{w:"QALA",c:"Memarlıq"},
+{w:"TAVAN",c:"Memarlıq"},
+{w:"FASAD",c:"Memarlıq"},
+{w:"MEHRAB",c:"Memarlıq"},
+{w:"ARKA",c:"Memarlıq"},
+{w:"TİKİLİ",c:"Memarlıq"},
+{w:"DAYAQ",c:"Memarlıq"},
+{w:"TAĞ",c:"Memarlıq"},
+{w:"HƏYƏT",c:"Memarlıq"},
+{w:"İVAN",c:"Memarlıq"},
+{w:"KAŞI",c:"Memarlıq"},
+{w:"SARAY",c:"Memarlıq"},
+{w:"SƏKİ",c:"Memarlıq"},
+// Kənd təsərrüfatı
+{w:"TOXUM",c:"Kənd təsərrüfatı"},
+{w:"GÜBRƏ",c:"Kənd təsərrüfatı"},
+{w:"BİÇİN",c:"Kənd təsərrüfatı"},
+{w:"ƏKİN",c:"Kənd təsərrüfatı"},
+{w:"SUVARMA",c:"Kənd təsərrüfatı"},
+{w:"TARLA",c:"Kənd təsərrüfatı"},
+{w:"TAXIL",c:"Kənd təsərrüfatı"},
+{w:"BAĞ",c:"Kənd təsərrüfatı"},
+{w:"KOMBAYN",c:"Kənd təsərrüfatı"},
+{w:"MƏHSUL",c:"Kənd təsərrüfatı"},
+{w:"TİNGƏ",c:"Kənd təsərrüfatı"},
+{w:"SƏPİN",c:"Kənd təsərrüfatı"},
+{w:"DƏRZ",c:"Kənd təsərrüfatı"},
+{w:"ANBAR",c:"Kənd təsərrüfatı"},
+{w:"MALDARLIQ",c:"Kənd təsərrüfatı"},
+{w:"ARICILIQ",c:"Kənd təsərrüfatı"},
+{w:"ÜZÜMÇÜLÜK",c:"Kənd təsərrüfatı"},
+{w:"PAMBIQÇILIQ",c:"Kənd təsərrüfatı"},
+{w:"TÜTÜNÇÜLÜK",c:"Kənd təsərrüfatı"},
+{w:"DƏYİRMAN",c:"Kənd təsərrüfatı"},
+{w:"BECƏRİLMƏ",c:"Kənd təsərrüfatı"},
+{w:"SUQAB",c:"Kənd təsərrüfatı"},
+// Bağçılıq
+{w:"BUDAMA",c:"Bağçılıq"},
+{w:"ŞİTİL",c:"Bağçılıq"},
+{w:"GÜL",c:"Bağçılıq"},
+{w:"SAKSI",c:"Bağçılıq"},
+{w:"YABA",c:"Bağçılıq"},
+{w:"PARNİK",c:"Bağçılıq"},
+{w:"PİYALƏ",c:"Bağçılıq"},
+{w:"KÖK",c:"Bağçılıq"},
+{w:"BECƏRMƏ",c:"Bağçılıq"},
+{w:"ŞPALER",c:"Bağçılıq"},
+{w:"GÜBRƏLƏMƏ",c:"Bağçılıq"},
+{w:"ÇİÇƏKLİK",c:"Bağçılıq"},
+{w:"BAĞÇA",c:"Bağçılıq"},
+// Ovçuluq və balıqçılıq
+{w:"OV",c:"Ovçuluq və balıqçılıq"},
+{w:"TOR",c:"Ovçuluq və balıqçılıq"},
+{w:"QARMAQ",c:"Ovçuluq və balıqçılıq"},
+{w:"OVÇU",c:"Ovçuluq və balıqçılıq"},
+{w:"TUZAQ",c:"Ovçuluq və balıqçılıq"},
+{w:"YEM",c:"Ovçuluq və balıqçılıq"},
+{w:"SÜNİYEM",c:"Ovçuluq və balıqçılıq"},
+{w:"PUSQU",c:"Ovçuluq və balıqçılıq"},
+{w:"ÇAPAR",c:"Ovçuluq və balıqçılıq"},
+{w:"QAYIQÇI",c:"Ovçuluq və balıqçılıq"},
+{w:"TİLOV",c:"Ovçuluq və balıqçılıq"},
+// Zaman anlayışları
+{w:"GÜN",c:"Zaman anlayışları"},
+{w:"ƏSR",c:"Zaman anlayışları"},
+{w:"ANLIQ",c:"Zaman anlayışları"},
+{w:"GECƏYARISI",c:"Zaman anlayışları"},
+{w:"İNDİ",c:"Zaman anlayışları"},
+{w:"ONİLLİK",c:"Zaman anlayışları"},
+{w:"MÖVSÜM",c:"Zaman anlayışları"},
+{w:"DÖVR",c:"Zaman anlayışları"},
+{w:"MÜDDƏT",c:"Zaman anlayışları"},
+{w:"VAXT",c:"Zaman anlayışları"},
+{w:"GECİKMƏ",c:"Zaman anlayışları"},
+{w:"GƏLƏCƏK",c:"Zaman anlayışları"},
+{w:"KEÇMİŞ",c:"Zaman anlayışları"},
+{w:"İNDİKİ",c:"Zaman anlayışları"},
+{w:"TARİXÇƏ",c:"Zaman anlayışları"},
+// Teatr və kino
+{w:"DEKORASİYA",c:"Teatr və kino"},
+{w:"TAMAŞA",c:"Teatr və kino"},
+{w:"QRİM",c:"Teatr və kino"},
+{w:"PROJEKTOR",c:"Teatr və kino"},
+{w:"SUFLYOR",c:"Teatr və kino"},
+{w:"PYES",c:"Teatr və kino"},
+{w:"MONOLOQ",c:"Teatr və kino"},
+{w:"DİALOQ",c:"Teatr və kino"},
+{w:"TAMAŞAÇI",c:"Teatr və kino"},
+{w:"PƏRDƏARASI",c:"Teatr və kino"},
+{w:"SUBTİTR",c:"Teatr və kino"},
+{w:"MONTAJ",c:"Teatr və kino"},
+// Rəssamlıq
+{w:"FIRÇA",c:"Rəssamlıq"},
+{w:"PALİTRA",c:"Rəssamlıq"},
+{w:"KOLORİT",c:"Rəssamlıq"},
+{w:"ETÜD",c:"Rəssamlıq"},
+{w:"PORTRET",c:"Rəssamlıq"},
+{w:"MƏNZƏRƏ",c:"Rəssamlıq"},
+{w:"MİNİATÜR",c:"Rəssamlıq"},
+{w:"ÇƏRÇİVƏ",c:"Rəssamlıq"},
+{w:"ESKİZ",c:"Rəssamlıq"},
+{w:"NATÜRMORT",c:"Rəssamlıq"},
+{w:"QRAFİKA",c:"Rəssamlıq"},
+{w:"KARİKATURA",c:"Rəssamlıq"},
+{w:"RƏNG",c:"Rəssamlıq"},
+// Sosial media
+{w:"PAYLAŞIM",c:"Sosial media"},
+{w:"BƏYƏNMƏ",c:"Sosial media"},
+{w:"ŞƏRH",c:"Sosial media"},
+{w:"İZLƏYİCİ",c:"Sosial media"},
+{w:"PROFİL",c:"Sosial media"},
+{w:"HAŞTAQ",c:"Sosial media"},
+{w:"VİDEO",c:"Sosial media"},
+{w:"FOTO",c:"Sosial media"},
+{w:"YAYIM",c:"Sosial media"},
+{w:"MESAJ",c:"Sosial media"},
+{w:"BİLDİRİŞ",c:"Sosial media"},
+{w:"HESAB",c:"Sosial media"},
+{w:"TREND",c:"Sosial media"},
+{w:"BLOGER",c:"Sosial media"},
+{w:"ABUNƏÇİ",c:"Sosial media"},
+{w:"REPOST",c:"Sosial media"},
+{w:"STORİ",c:"Sosial media"},
+// Səyahət
+{w:"BAQAJ",c:"Səyahət"},
+{w:"BİLET",c:"Səyahət"},
+{w:"MARŞRUT",c:"Səyahət"},
+{w:"OTEL",c:"Səyahət"},
+{w:"TURİST",c:"Səyahət"},
+{w:"GİDLİK",c:"Səyahət"},
+{w:"GÖMRÜK",c:"Səyahət"},
+{w:"PASSAJİR",c:"Səyahət"},
+{w:"KUPE",c:"Səyahət"},
+{w:"BƏLƏDÇİ",c:"Səyahət"},
+{w:"SƏRNİŞİN",c:"Səyahət"},
+// Hobbi və istirahət
+{w:"BALIQÇILIQ",c:"Hobbi və istirahət"},
+{w:"RƏSSAMLIQ",c:"Hobbi və istirahət"},
+{w:"FOTOQRAFİYA",c:"Hobbi və istirahət"},
+{w:"BAĞÇILIQ",c:"Hobbi və istirahət"},
+{w:"OXUMAQ",c:"Hobbi və istirahət"},
+{w:"TİKMƏ",c:"Hobbi və istirahət"},
+{w:"KOLLEKSİYA",c:"Hobbi və istirahət"},
+{w:"HEYKƏLTƏRAŞLIQ",c:"Hobbi və istirahət"},
+{w:"MEDİTASİYA",c:"Hobbi və istirahət"},
+{w:"YOQA",c:"Hobbi və istirahət"},
+{w:"RƏQS",c:"Hobbi və istirahət"},
+{w:"KOLLAJ",c:"Hobbi və istirahət"},
+{w:"ORİGAMİ",c:"Hobbi və istirahət"},
+{w:"MODELLƏŞDİRMƏ",c:"Hobbi və istirahət"},
+// Geologiya
+{w:"MİNERAL",c:"Geologiya"},
+{w:"ZƏLZƏLƏ",c:"Geologiya"},
+{w:"LAVA",c:"Geologiya"},
+{w:"QATLAQ",c:"Geologiya"},
+{w:"SÜXUR",c:"Geologiya"},
+{w:"QLETSER",c:"Geologiya"},
+{w:"MƏCRA",c:"Geologiya"},
+{w:"EROZİYA",c:"Geologiya"},
+{w:"QUMDAŞI",c:"Geologiya"},
+{w:"ƏHƏNGDAŞI",c:"Geologiya"},
+{w:"AŞINMA",c:"Geologiya"},
+{w:"MAQMA",c:"Geologiya"},
+{w:"TEKTONİKA",c:"Geologiya"},
+{w:"FOSSİL",c:"Geologiya"},
+{w:"KRATER",c:"Geologiya"},
+{w:"ÇÖKÜNTÜ",c:"Geologiya"},
+// Bank və maliyyə əməliyyatları
+{w:"KART",c:"Bank və maliyyə əməliyyatları"},
+{w:"ÇEK",c:"Bank və maliyyə əməliyyatları"},
+{w:"DEPOZİT",c:"Bank və maliyyə əməliyyatları"},
+{w:"OVERDRAFT",c:"Bank və maliyyə əməliyyatları"},
+{w:"BANKOMAT",c:"Bank və maliyyə əməliyyatları"},
+{w:"VALYUTA",c:"Bank və maliyyə əməliyyatları"},
+{w:"TRANSFER",c:"Bank və maliyyə əməliyyatları"},
+{w:"ƏMANƏT",c:"Bank və maliyyə əməliyyatları"},
+{w:"İPOTEKA",c:"Bank və maliyyə əməliyyatları"},
+{w:"KOMİSYON",c:"Bank və maliyyə əməliyyatları"},
+{w:"HESABLAŞMA",c:"Bank və maliyyə əməliyyatları"},
+// Biologiya
+{w:"GEN",c:"Biologiya"},
+{w:"ORQANİZM",c:"Biologiya"},
+{w:"BAKTERİYA",c:"Biologiya"},
+{w:"XROMOSOM",c:"Biologiya"},
+{w:"ZÜLAL",c:"Biologiya"},
+{w:"FERMENT",c:"Biologiya"},
+{w:"METABOLİZM",c:"Biologiya"},
+{w:"MUTASİYA",c:"Biologiya"},
+{w:"EMBRİON",c:"Biologiya"},
+{w:"HÜCEYRƏÇİK",c:"Biologiya"},
+{w:"İRSİYYƏT",c:"Biologiya"},
+{w:"POPULYASİYA",c:"Biologiya"},
+// Fizika
+{w:"QÜVVƏ",c:"Fizika"},
+{w:"SÜRƏT",c:"Fizika"},
+{w:"KÜTLƏ",c:"Fizika"},
+{w:"CAZİBƏ",c:"Fizika"},
+{w:"İŞIQ",c:"Fizika"},
+{w:"DALĞA",c:"Fizika"},
+{w:"İSTİLİK",c:"Fizika"},
+{w:"SÜRTÜNMƏ",c:"Fizika"},
+{w:"VOLT",c:"Fizika"},
+{w:"TEZLİK",c:"Fizika"},
+{w:"REZONANS",c:"Fizika"},
+{w:"OPTİKA",c:"Fizika"},
+{w:"VAKUUM",c:"Fizika"},
+{w:"AXIN",c:"Fizika"},
+{w:"QÜVVƏT",c:"Fizika"},
+// Astronomiya
+{w:"ORBİT",c:"Astronomiya"},
+{w:"BÜRC",c:"Astronomiya"},
+{w:"ASTEROİD",c:"Astronomiya"},
+{w:"PULSAR",c:"Astronomiya"},
+{w:"KOSMONAVT",c:"Astronomiya"},
+{w:"SPUTNİK",c:"Astronomiya"},
+{w:"QUYRUQLUULDUZ",c:"Astronomiya"},
+{w:"AYTUTULMASI",c:"Astronomiya"},
+{w:"GÜNTUTULMASI",c:"Astronomiya"},
+{w:"SƏMA",c:"Astronomiya"},
+// Qış idmanı
+{w:"SÜRÜŞMƏ",c:"Qış idmanı"},
+{w:"ÇANA",c:"Qış idmanı"},
+{w:"QARTOPU",c:"Qış idmanı"},
+{w:"SLALOM",c:"Qış idmanı"},
+{w:"SKİ",c:"Qış idmanı"},
+{w:"SNOUBORD",c:"Qış idmanı"},
+{w:"BUZPATENİ",c:"Qış idmanı"},
+{w:"LÜJ",c:"Qış idmanı"},
+{w:"KEÇİD",c:"Qış idmanı"},
+{w:"ÇANAQ",c:"Qış idmanı"},
+// Su idmanı
+{w:"VATERPOLO",c:"Su idmanı"},
+{w:"SÜRFİNQ",c:"Su idmanı"},
+{w:"YELKƏN",c:"Su idmanı"},
+{w:"DALĞIC",c:"Su idmanı"},
+{w:"SUALTI",c:"Su idmanı"},
+{w:"AKVALANQ",c:"Su idmanı"},
+{w:"QURUQÇULUQ",c:"Su idmanı"},
+{w:"SAL",c:"Su idmanı"},
+{w:"ÜZGÜÇÜ",c:"Su idmanı"},
+{w:"LƏPƏ",c:"Su idmanı"},
+// Ev heyvanları baxımı
+{w:"TASMA",c:"Ev heyvanları baxımı"},
+{w:"BƏSLƏYİCİ",c:"Ev heyvanları baxımı"},
+{w:"YUYUNMA",c:"Ev heyvanları baxımı"},
+{w:"OYUNCAQ",c:"Ev heyvanları baxımı"},
+{w:"KLETKA",c:"Ev heyvanları baxımı"},
+{w:"ÇİPLƏNMƏ",c:"Ev heyvanları baxımı"},
+{w:"DIRNAQKƏSƏN",c:"Ev heyvanları baxımı"},
+{w:"QƏFƏS",c:"Ev heyvanları baxımı"},
+{w:"SUCUQLUQ",c:"Ev heyvanları baxımı"},
+{w:"MƏMƏ",c:"Ev heyvanları baxımı"},
+{w:"YEMLİK",c:"Ev heyvanları baxımı"},
+{w:"TIMAR",c:"Ev heyvanları baxımı"},
+// Hüquqi peşələr
+{w:"PROKUROR",c:"Hüquqi peşələr"},
+{w:"NOTARİUS",c:"Hüquqi peşələr"},
+{w:"MÜFƏTTİŞ",c:"Hüquqi peşələr"},
+{w:"MÜHAFİZƏÇİ",c:"Hüquqi peşələr"},
+{w:"QANUNŞÜNAS",c:"Hüquqi peşələr"},
+{w:"İCRAÇI",c:"Hüquqi peşələr"},
+{w:"MÜŞAVİR",c:"Hüquqi peşələr"},
+{w:"ARAŞDIRMAÇI",c:"Hüquqi peşələr"},
+{w:"ZABİT",c:"Hüquqi peşələr"},
+{w:"MÜFƏTTİŞLİK",c:"Hüquqi peşələr"},
+// Növbəti nəsil texnologiya
+{w:"İNTELLEKT",c:"Növbəti nəsil texnologiya"},
+{w:"ROBOTLAŞDIRMA",c:"Növbəti nəsil texnologiya"},
+{w:"REALLIQ",c:"Növbəti nəsil texnologiya"},
+{w:"BLOKÇEYN",c:"Növbəti nəsil texnologiya"},
+{w:"AVTOPİLOT",c:"Növbəti nəsil texnologiya"},
+{w:"AVTOMATLAŞMA",c:"Növbəti nəsil texnologiya"},
+{w:"ÇAP",c:"Növbəti nəsil texnologiya"},
+{w:"KVANT",c:"Növbəti nəsil texnologiya"},
+{w:"ALQORİTMSİSTEMİ",c:"Növbəti nəsil texnologiya"},
+{w:"NEYRON",c:"Növbəti nəsil texnologiya"},
+{w:"VERİLƏNLƏR",c:"Növbəti nəsil texnologiya"},
+// Zoologiya təsnifatı
+{w:"MƏMƏLİ",c:"Zoologiya təsnifatı"},
+{w:"SÜRÜNƏN",c:"Zoologiya təsnifatı"},
+{w:"AMFİBİYA",c:"Zoologiya təsnifatı"},
+{w:"YIRTICI",c:"Zoologiya təsnifatı"},
+{w:"OTYEYƏN",c:"Zoologiya təsnifatı"},
+{w:"ƏTYEYƏN",c:"Zoologiya təsnifatı"},
+{w:"SOYUQQANLI",c:"Zoologiya təsnifatı"},
+{w:"QANADLI",c:"Zoologiya təsnifatı"},
+{w:"DIRNAQLI",c:"Zoologiya təsnifatı"},
+{w:"SÜRÜ",c:"Zoologiya təsnifatı"},
+{w:"YUVA",c:"Zoologiya təsnifatı"},
+{w:"NƏSİL",c:"Zoologiya təsnifatı"},
+// Poçt və rabitə
+{w:"MƏKTUB",c:"Poçt və rabitə"},
+{w:"İNDEKS",c:"Poçt və rabitə"},
+{w:"POÇTALYON",c:"Poçt və rabitə"},
+{w:"BANDEROL",c:"Poçt və rabitə"},
+{w:"TELEQRAF",c:"Poçt və rabitə"},
+{w:"MARKA",c:"Poçt və rabitə"},
+{w:"QƏBZ",c:"Poçt və rabitə"},
+{w:"ANTENA",c:"Poçt və rabitə"},
+{w:"SİQNAL",c:"Poçt və rabitə"},
+{w:"KURYER",c:"Poçt və rabitə"},
+// Dəmir yolu nəqliyyatı
+{w:"VAQON",c:"Dəmir yolu nəqliyyatı"},
+{w:"RELS",c:"Dəmir yolu nəqliyyatı"},
+{w:"PERON",c:"Dəmir yolu nəqliyyatı"},
+{w:"BİLETXANA",c:"Dəmir yolu nəqliyyatı"},
+{w:"NƏZARƏTÇİ",c:"Dəmir yolu nəqliyyatı"},
+{w:"ŞPAL",c:"Dəmir yolu nəqliyyatı"},
+{w:"SİSTERN",c:"Dəmir yolu nəqliyyatı"},
+{w:"EKSPRES",c:"Dəmir yolu nəqliyyatı"},
+{w:"DƏHLİZ",c:"Dəmir yolu nəqliyyatı"},
+{w:"REYS",c:"Dəmir yolu nəqliyyatı"},
+// Meteoroloji hadisələr
+{w:"TAYFUN",c:"Meteoroloji hadisələr"},
+{w:"SUNAMİ",c:"Meteoroloji hadisələr"},
+{w:"ŞEHLİ",c:"Meteoroloji hadisələr"},
+{w:"DUMANLI",c:"Meteoroloji hadisələr"},
+{w:"GURULTU",c:"Meteoroloji hadisələr"},
+{w:"BORAN",c:"Meteoroloji hadisələr"},
+{w:"QIROV",c:"Meteoroloji hadisələr"},
+{w:"YAĞINTI",c:"Meteoroloji hadisələr"},
+{w:"ÇİSƏK",c:"Meteoroloji hadisələr"},
+{w:"AYAZ",c:"Meteoroloji hadisələr"},
+// Milli geyim və bəzək
+{w:"ARXALIQ",c:"Milli geyim və bəzək"},
+{w:"KÜLƏCƏ",c:"Milli geyim və bəzək"},
+{w:"LƏÇƏK",c:"Milli geyim və bəzək"},
+{w:"BOYUNBAĞI",c:"Milli geyim və bəzək"},
+{w:"SIRĞA",c:"Milli geyim və bəzək"},
+{w:"BİLƏRZİK",c:"Milli geyim və bəzək"},
+{w:"TAC",c:"Milli geyim və bəzək"},
+{w:"XALXAL",c:"Milli geyim və bəzək"},
+{w:"BAŞLIQ",c:"Milli geyim və bəzək"},
+{w:"KƏLAĞAYI",c:"Milli geyim və bəzək"},
+// Ədəbi janrlar
+{w:"DASTAN",c:"Ədəbi janrlar"},
+{w:"ƏFSANƏ",c:"Ədəbi janrlar"},
+{w:"BALLADA",c:"Ədəbi janrlar"},
+{w:"TRAGEDİYA",c:"Ədəbi janrlar"},
+{w:"KOMEDİYA",c:"Ədəbi janrlar"},
+{w:"SATİRA",c:"Ədəbi janrlar"},
+{w:"ESSE",c:"Ədəbi janrlar"},
+{w:"MEMUAR",c:"Ədəbi janrlar"},
+{w:"NOVELLA",c:"Ədəbi janrlar"},
+{w:"POEMA",c:"Ədəbi janrlar"},
+];
+
+/* ================== ƏLİFBA ================== */
+const ALPHABET = ["A","B","C","Ç","D","E","Ə","F","G","Ğ","H","X","I","İ","J","K","Q","L","M","N","O","Ö","P","R","S","Ş","T","U","Ü","V","Y","Z"];
+
+/* ================== OYUN VƏZİYYƏTİ ================== */
+const MAX_WRONG = 8;
+let usedWords = new Set();
+let currentWord = null;
+let guessedLetters = new Set();
+let wrongList = [];
+let wrong = 0;
+let gameOver = false;
+let toastTimer = null;
+
+const el = {
+  word: document.getElementById('wordDisplay'),
+  wrongLetters: document.getElementById('wrongLetters'),
+  message: document.getElementById('message'),
+  toast: document.getElementById('toast'),
+  keyboard: document.getElementById('keyboard'),
+  newWordBtn: document.getElementById('newWordBtn'),
+  wordCountMeta: document.getElementById('wordCountMeta'),
+  wrongCount: document.getElementById('wrongCount'),
+};
+
+function toUpperAz(str){
+  return str.toLocaleUpperCase('az');
+}
+
+function pickWord(){
+  let available = WORDS.filter(x => !usedWords.has(x.w));
+  if(available.length === 0){
+    usedWords.clear();
+    available = WORDS;
+  }
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+function buildKeyboard(){
+  el.keyboard.innerHTML = '';
+  ALPHABET.forEach(letter => {
+    const btn = document.createElement('button');
+    btn.className = 'key';
+    btn.textContent = letter;
+    btn.id = 'key-' + letter;
+    btn.addEventListener('click', () => guessLetter(letter));
+    el.keyboard.appendChild(btn);
+  });
+}
+
+function renderWord(){
+  el.word.textContent = currentWord.w.split('').map(ch => guessedLetters.has(ch) ? ch : '_').join(' ');
+}
+
+function renderHangman(){
+  el.wrongCount.textContent = wrong;
+  for(let i = 1; i <= MAX_WRONG; i++){
+    const part = document.getElementById('hg-' + i);
+    if(!part) continue;
+    if(i <= wrong){
+      part.classList.add('show');
+    } else {
+      part.classList.remove('show');
+    }
+  }
+}
+
+function renderWrongLetters(){
+  el.wrongLetters.textContent = wrongList.length ? ('Səhv hərflər: ' + wrongList.join(', ')) : '';
+}
+
+function showToast(text){
+  el.toast.textContent = text;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.toast.textContent = ''; }, 2000);
+}
+
+function startGame(){
+  currentWord = pickWord();
+  usedWords.add(currentWord.w);
+  guessedLetters = new Set();
+  wrongList = [];
+  wrong = 0;
+  gameOver = false;
+
+  el.message.textContent = '';
+  el.message.className = 'message';
+  el.toast.textContent = '';
+  el.newWordBtn.style.display = 'none';
+
+  buildKeyboard();
+  renderWord();
+  renderHangman();
+  renderWrongLetters();
+}
+
+function guessLetter(rawLetter){
+  if(gameOver) return;
+  const letter = toUpperAz(rawLetter);
+  if(!ALPHABET.includes(letter)) return;
+
+  const btn = document.getElementById('key-' + letter);
+
+  if(guessedLetters.has(letter)){
+    showToast('Bu hərfi artıq seçmisiniz!');
+    return;
+  }
+
+  guessedLetters.add(letter);
+  if(btn) btn.disabled = true;
+
+  if(currentWord.w.includes(letter)){
+    if(btn) btn.classList.add('correct');
+    renderWord();
+    if(currentWord.w.split('').every(ch => guessedLetters.has(ch))){
+      endGame(true);
+    }
+  } else {
+    wrong++;
+    if(btn) btn.classList.add('wrong');
+    wrongList.push(letter);
+    renderHangman();
+    renderWrongLetters();
+    if(wrong >= MAX_WRONG){
+      endGame(false);
+    }
+  }
+}
+
+function endGame(won){
+  gameOver = true;
+  document.querySelectorAll('.key').forEach(b => b.disabled = true);
+  el.newWordBtn.style.display = 'inline-block';
+
+  if(won){
+    el.message.textContent = '🎉 Təbriklər! Sözü tapdın: ' + currentWord.w;
+    el.message.className = 'message win';
+    el.newWordBtn.textContent = 'Yeni söz →';
+  } else {
+    el.word.textContent = currentWord.w.split('').join(' ');
+    el.message.textContent = '💀 Oyun bitdi! Doğru söz: ' + currentWord.w;
+    el.message.className = 'message lose';
+    el.newWordBtn.textContent = 'Yenidən oyna →';
+  }
+}
+
+el.newWordBtn.addEventListener('click', startGame);
+
+document.addEventListener('keydown', (e) => {
+  if(e.key.length === 1){
+    const up = toUpperAz(e.key);
+    if(ALPHABET.includes(up)) guessLetter(up);
+  }
+});
+
+el.wordCountMeta.textContent = WORDS.length + ' söz • ' +
+  [...new Set(WORDS.map(x => x.c))].length + ' kateqoriya';
+
+startGame();
+</script>
+</body>
+</html>
